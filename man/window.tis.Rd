@@ -8,7 +8,7 @@
   between the times \code{start} and \code{end}. 
 }
 \usage{
-window.tis(x, start = NULL, end = NULL, extend = F, ...)
+\method{window}{tis}(x, start = NULL, end = NULL, extend = F, ...)
 }
 \arguments{
   \item{x}{

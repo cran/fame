@@ -87,7 +87,7 @@
 serveHostAndPort(clientHost, clientPort, timeout = 3600, quitAfter = T)
 startRemoteServer(host = getOption("remoteHost"), user. = user(), timeout = 3600)
 hasExpired(ss)
-print.serverSession(x, \dots)
+\method{print}{serverSession}(x, \dots)
 serverSession()
 endServerSession()
 validServerIsRunning(fail = F)

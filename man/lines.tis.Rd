@@ -6,8 +6,8 @@
   Plotting methods for \code{tis} objects
 }
 \usage{
-lines.tis(x, midPoints = T, offset = 1, dropNA = F, ...)
-points.tis(x, midPoints = T, offset = 1, dropNA = F, ...)
+\method{lines}{tis}(x, midPoints = T, offset = 1, dropNA = F, ...)
+\method{points}{tis}(x, midPoints = T, offset = 1, dropNA = F, ...)
 }
 \arguments{
   \item{x}{

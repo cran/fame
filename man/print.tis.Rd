@@ -5,7 +5,7 @@
   Print method for time indexed series.
 }
 \usage{
-print.tis(x, format = "\%Y\%m\%d", matrix.format = F, ...)
+\method{print}{tis}(x, format = "\%Y\%m\%d", matrix.format = F, ...)
 }
 \arguments{
   \item{x}{

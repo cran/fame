@@ -5,7 +5,7 @@
   Format a time index object for printing
 }
 \usage{
-format.ti(x, ..., tz = "GMT")
+\method{format}{ti}(x, ..., tz = "GMT")
 }
 \arguments{
   \item{x}{ a time index object }

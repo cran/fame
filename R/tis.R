@@ -115,6 +115,37 @@ aggregate.ts <- function (x, nfrequency = 1, FUN = sum, ndeltat = 1,
   ts(x, start = nstart, frequency = nfrequency)
 }
 
+cummax.tis <- function(x){
+  xs <- stripTis(x)
+  if(is.matrix(xs)) xs <- apply(xs, 2, cummax)
+  else              xs <- cummax(xs)
+  tis(xs, start = start(x))
+}
+
+cummin.tis <- function(x){
+  xs <- stripTis(x)
+  if(is.matrix(xs)) xs <- apply(xs, 2, cummin)
+  else              xs <- cummin(xs)
+  tis(xs, start = start(x))
+}
+
+cumprod.tis <- function(x){
+  xs <- stripTis(x)
+  if(is.matrix(xs)) xs <- apply(xs, 2, cumprod)
+  else              xs <- cumprod(xs)
+  tis(xs, start = start(x))
+}
+
+cumsum.tis <- function(x){
+  xs <- stripTis(x)
+  if(is.matrix(xs)) xs <- apply(xs, 2, cumsum)
+  else              xs <- cumsum(xs)
+  tis(xs, start = start(x))
+}
+
+
+
+
 filter <- function(x, ...) UseMethod("filter")
 
 filter.tis <- function(x, ...) naWindow(tis(filter.default(x, ...), start = start(x)))

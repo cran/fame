@@ -27,12 +27,12 @@
 }
 \usage{
 ti(x, \dots)
-ti.Date(x, \dots)
-ti.default(x, tif = NULL, freq = NULL, \dots)
-ti.jul(x, tif = NULL, freq = NULL, hour = 0, minute = 0, second = 0, \dots)
-ti.ssDate(x, \dots)
-ti.ti(x, tif = NULL, freq = NULL, \dots)
-ti.tis(x, \dots)
+\method{ti}{Date}(x, \dots)
+\method{ti}{default}(x, tif = NULL, freq = NULL, \dots)
+\method{ti}{jul}(x, tif = NULL, freq = NULL, hour = 0, minute = 0, second = 0, \dots)
+\method{ti}{ssDate}(x, \dots)
+\method{ti}{ti}(x, tif = NULL, freq = NULL, \dots)
+\method{ti}{tis}(x, \dots)
 as.ti(x)
 is.ti(x)
 couldBeTi(x, tif = NULL)
