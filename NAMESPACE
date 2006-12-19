@@ -5,10 +5,9 @@ import(utils)
 ## export(assign, tk_select.list)
 
 useDynLib(fame)
-export(as.jul, as.POSIXlt, as.ssDate, as.ti, as.tis, availablePort,
-       badClassStop, basis, "basis<-", between,
-       blanks, columns, commandLineString, 
-       convert, couldBeTi, csv,
+export(addLast, askForPassword, askForString, as.jul, as.POSIXlt, as.ssDate,
+       as.ti, as.tis, availablePort, badClassStop, basis, "basis<-", between,
+       blanks, columns, commandLineString, convert, couldBeTi, csv, 
        currentSunday, currentMonday, currentTuesday, currentWednesday,
        currentThursday, currentFriday, currentSaturday,
        currentJanuary, currentFebruary, currentMarch,
@@ -46,8 +45,7 @@ export(as.jul, as.POSIXlt, as.ssDate, as.ti, as.tis, availablePort,
        tunnelSeries, user, validServerIsRunning, year, ymd)
 
 ## not exported
-## addLast, askForPassword, askForString, convertFreqCode, 
-## fameBasiss, fameClasses, fameObserveds, fameToTif,
+## convertFreqCode, fameBasiss, fameClasses, fameObserveds, fameToTif,
 ## fameTypes, fameModeInt, freq2tif, hasExpired, initialTifList,
 ## is.time, is.ymd, jul2ti, jul2time, jul2ymd, jul2yp, julToTi,
 ## julToWeekday, period, ti2jul, ti2time, ti2ymd, ti2yp,

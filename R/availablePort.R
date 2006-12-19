@@ -3,7 +3,7 @@ portsInUse <- function(){
   if(runningLinux()){
     hexTcp <- system("cat /proc/net/tcp | awk '{print $2}'", intern = T)
     hexUdp <- system("cat /proc/net/udp | awk '{print $2}'", intern = T)
-    ans <- unique(sort(hex2numeric(gsub(".*\:", "", c(hexTcp[-1], hexUdp[-1])))))
+    ans <- unique(sort(hex2numeric(gsub(".*:", "", c(hexTcp[-1], hexUdp[-1])))))
   }
   else {
     if(runningWindows()){
