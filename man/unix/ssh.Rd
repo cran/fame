@@ -3,6 +3,9 @@
 \title{Execute a command on another machine}
 \description{This function composes an ssh (Secure SHell) command to run
   something on another machine and invokes it via \code{system()}.
+
+  Alternatively, if a function \code{localSsh} is defined, taking the
+  same arguments as \code{ssh}, it will be called instead.
 }
 \usage{
 ssh(command, host = getOption("remoteHost"), user. = user(), wait = F, ...)
@@ -26,10 +29,7 @@ ssh(command, host = getOption("remoteHost"), user. = user(), wait = F, ...)
 \note{
   This is a very simple-minded implementation.  I did just enough
   work on it to get the \code{startRemoteServer} function working and
-  quit while I was ahead.  No error checking is done. The Linux version
-  assumes that the \code{ssh} command is available on your path, while
-  the Windows implementation makes the same assumption about the
-  \code{plink} program.
+  quit while I was ahead.  No error checking is done.
 }
 \examples{
 \dontrun{

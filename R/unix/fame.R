@@ -47,6 +47,7 @@ fameStart <- function(){
   if(status != 0 && status != 1) stop(fameStatusMessage(status))
   boink <- .C("cfmopwk", status = integer(1), key = integer(1), PACKAGE = "fame")
   if(boink$status == 0){
+    if(exists("fameLocalInit", mode = "function"))
     fameLocalInit()
   }
   else {
@@ -56,10 +57,6 @@ fameStart <- function(){
                  fameStatusMessage(boink$status), sep = "")
     stop(msg)
   }
-}
-
-fameLocalInit <- function(){
-  ## redefine this function for local initialization
 }
 
 fameModeInt <- function(string){
@@ -97,11 +94,13 @@ fameDeleteObject <- function(dbKey, fname){
 }
 
 getFamePath <- function(dbString){
-  ## redefine this function if you have some other way to fine the path to a
-  ## database 
+  ## define fameLocalPath if you have a way to find the path to a database 
   ## return NULL if database corresponding to dbString could not be found
-  if(system(paste("test -r", dbString), intern = F) == 0)
-    dbString
+  if(exists("fameLocalPath", mode = "function"))
+    path <- fameLocalPath(dbString)
+  else path <- dbString
+  if(system(paste("test -r", path), intern = F) == 0)
+    path
   else NULL
 }
 

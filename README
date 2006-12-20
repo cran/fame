@@ -71,41 +71,41 @@ back through a socket connection.
 
 
 CUSTOMIZATION:
-There are three functions that you may want to reimplement and put ahead of
+There are three functions that you may want to (re)implement and put ahead of
 fame on the search path.  
 
-  (i) ssh():  The Linux version is very simple and should be fine.  The
-      Windows version uses the 'plink' program from the open-source PuTTY ssh
-      client.  If you use some other Windows ssh client, you'll have to
-      rewrite ssh().
+  (i) localSsh():  The package comes with Unix and Windows ssh() functions.
+      The Unix version assumues that ssh is installed and correctly set up,
+      which it probably is on a modern system.  The Windows version uses the 
+      'plink' program from the open-source PuTTY ssh client.
+      If you want to use some other ssh client, you can write a function
+      called 'localSsh' taking the same arguments as 'ssh' does.  The 'ssh'
+      function looks to see if such a function exists; if it does, it is
+      called instead of running the body of 'ssh'.
 
  (ii) fameLocalInit():  When starting FAME, the fameStart() function opens a
-      work database and then invokes fameLocalInit().  The supplied
-      implementation of fameLocalInit() does nothing.  My own local version
-      loads some additional Federal Reserve Board code, i.e., 
+      work database and then invokes fameLocalInit(), if it exists. My own
+      version (not part of this package) loads some additional Federal Reserve
+      Board code, i.e.,
 
-      fameLocalInit <- function(){ ## local redefinition
+      fameLocalInit <- function(){ 
         fameCommand('load file("/opt/fame/frb/pc/lib.pc")', silent = T) 
         fameCommand('load file("/opt/fame/frb/pc/syslib.pc")', silent = T)
       }
 
-(iii) getFamePath():  takes a string argument and returns a path to a
-      database. The supplied implementation is pretty trivial:
-
-      getFamePath <- function(dbString){
-        ## redefine this function if you have a nice way to find 
-        ## the path to a database. return NULL if database corresponding to
-        ## dbString could not be found 
-        if(file.exists(dbString)) dbString
-        else NULL
-      }
+(iii) fameLocalPath(dbString):  takes a string argument and returns a string,
+      which should either be a path to a database or the input string. 
+      This is called by the internal function getFamePath(dbString), which
+      first checks to see if dbString is already the path to an existing file.
+      If not, and the function fameLocalPath exists, it gets called with
+      dbString as its argument.  The return value from fameLocalPath() is
+      checked, and if it is not the path to an existing file, getFamePath()
+      returns NULL.
 
 	  At the Federal Reserve Board, we have "registered" databases, and a
 	  shell script that can find the path to a registered database given its
-	  name.  So my local implementation of getFamePath() first looks for the
-	  direct match with file.exists() as above, but if it doesn't find a
-	  match, it also tries the registered databases lookup, returning the path
-	  name if it succeeds, and NULL if it doesn't.
+	  name.  So our fameLocalPath() tries the registered databases lookup,
+	  returning the path name if it succeeds, or the original dbString.
 
 Setting Default Frequencies: 
 
@@ -125,5 +125,3 @@ the lag(x, k) function says that a series lagged by a positive k starts
 earlier.  The opposite is true for the lag function in this package, to
 maintain consistency with the common usage of 'first lag, second lag' and so
 on in econometrics.
-
-  
