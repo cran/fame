@@ -119,9 +119,7 @@ actual frequencies the strings "weekly", "biweekly", "bimonthly",
 
 LAGS:
 
-A number of functions have been reimplemented and/or made generic in this
-package.  Only one has really changed its meaning.  The standard R version of
-the lag(x, k) function says that a series lagged by a positive k starts
-earlier.  The opposite is true for the lag function in this package, to
+The lag(x, k) function says that a series lagged by a positive k starts
+earlier.  The opposite is true for the Lag function in this package, to
 maintain consistency with the common usage of 'first lag, second lag' and so
 on in econometrics.

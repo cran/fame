@@ -184,16 +184,7 @@ dateRange <- function(x){
 }
 
 lag.tis <- function(x, k = 1, ...){
-  k <- round(k)
-  start(x) <- start(x) + k
-  x
-}
-
-lag.default <- function(x, k = 1, ...){
-  x <- as.ts(x)
-  xtsp <- tsp(x)
-  k <- round(k)
-  tsp(x) <- xtsp + (round(k)/xtsp[3]) * c(1, 1, 0)
+  start(x) <- start(x) - round(k)
   x
 }
 

@@ -368,9 +368,9 @@ ilspline <- function(xint, w){
     z <- tis(z, start=ti(19010101, "daily"))
     d <- diff(z)
     q0 <- d/4
-    l <- q0/(lag(q0) + q0)
-    r <- q0/(q0 + lag(q0, -1))
-    M <- diag(c(d[1], q0*(2*lag(r) + l + r + 2*lag(l, -1)), d[n]))
+    l <- q0/(lag(q0, -1) + q0)
+    r <- q0/(q0 + lag(q0))
+    M <- diag(c(d[1], q0*(2*lag(r, -1) + l + r + 2*lag(l)), d[n]))
     rm <- row(M)
     cm <- col(M)
     M[rm == cm + 1] <- q0*l
@@ -378,7 +378,7 @@ ilspline <- function(xint, w){
     M[1,2] <- M[n,n-1] <- 0
     class(M) <- "tridiag"
     y <- solve(M, w)
-    x <- as.vector((z + lag(z))/2)
+    x <- as.vector((z + lag(z, -1))/2)
   }
   if(!is.null(wstart)){
     y <- tis(y, start=wstart)

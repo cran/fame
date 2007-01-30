@@ -5,8 +5,15 @@
 
 fameRunning <- function(){
   ## are we already running a Fame Server process?
-  cmd <- paste("pgrep -fU", user(), "-P", pid(), "'FAME SERVER'")
-  as.logical(length(system(cmd, intern = T)))
+  if(Sys.info()[1] == "Linux"){
+    cmd <- paste("pgrep -fU", user(), "-P", pid(), "'FAME SERVER'")
+    as.logical(length(system(cmd, intern = T)))
+  }
+  else {
+    cmd <- paste("ps -ef | grep", Sys.info()["user"], "| grep", Sys.getpid(),
+                 "| grep -v grep | grep -c 'FAME SERVER'")
+    as.logical(as.numeric(system(cmd, intern = T)))
+  }
 }
 
 fameStop <- function(){

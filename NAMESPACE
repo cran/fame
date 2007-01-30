@@ -25,7 +25,7 @@ export(addLast, askForPassword, askForString, as.jul, as.POSIXlt, as.ssDate,
        holidays, holidaysBetween, hostName, hourly, ilspline,
        interpNA, isEaster, isGoodFriday, isHoliday, isIntradayTif, is.jul,
        isLeapYear, is.ssDate, is.ti, is.tis, jul,
-       killProcess, lastDayOf, lags, lastBusinessDayOf, lastBusinessDayOfMonth,
+       killProcess, lastDayOf, lags, Lag, Lags, lastBusinessDayOf, lastBusinessDayOfMonth,
        latestSunday, latestMonday, latestTuesday, latestWednesday,
        latestThursday, latestFriday, latestSaturday,
        latestJanuary, latestFebruary, latestMarch,
@@ -105,7 +105,6 @@ S3method(jul, default)
 S3method(jul, jul)
 S3method(jul, ssDate)
 S3method(jul, ti)
-S3method(lag, default)
 S3method(lag, tis)
 S3method(lines, tis)
 S3method(max, jul)

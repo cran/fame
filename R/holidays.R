@@ -75,8 +75,9 @@ federalHolidays <- function(years, board = F){
     hols <- hols[!drop]
   }
   weekday <- dayOfWeek(hols)
-  hols[weekday == 1] <- ymd(jul(hols[weekday == 1]) + 1)
-  if(board)
+  if(any(weekday == 1))
+    hols[weekday == 1] <- ymd(jul(hols[weekday == 1]) + 1)
+  if(board && any(weekday == 7))
     hols[weekday == 7] <- ymd(jul(hols[weekday == 7]) - 1)
   hols
 }

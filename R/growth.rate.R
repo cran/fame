@@ -1,6 +1,6 @@
 growth.rate <- function(x, lag = 1, simple = T){
   x <- as.tis(x)
-  lx <- lag(x, lag)
+  lx <- lag(x, -lag)
   dx <- diff(x, lag = lag)
   f.over.l <- as.vector(frequency(x)/lag)
   if(simple)

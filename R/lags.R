@@ -5,7 +5,7 @@ lags <- function(x, lags, name = ""){
   for(i in lags) z <- cbind(z, lag(x, i))
   z <- z[,-1, drop = F]
 
-  lnames <- paste("(+", -lags, ")", sep = "")
+  lnames <- paste("(+", lags, ")", sep = "")
   lagNames <- gsub("\\+0", "0", gsub("\\+-", "-", lnames))
                        
   if(!missing(name) && length(name) == NCOL(x)) cn <- name
@@ -14,3 +14,5 @@ lags <- function(x, lags, name = ""){
   colnames(z) <- as.vector(outer(cn, lagNames, paste, sep = ""))
   z
 }
+
+Lags <- function(x, lags, name = "") lags(x, -lags, name)

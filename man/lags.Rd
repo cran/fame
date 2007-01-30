@@ -1,24 +1,36 @@
 \name{lags}
-\alias{lag.default}
 \alias{lag.tis}
 \alias{lags}
+\alias{Lag}
+\alias{Lags}
 \title{Lag a Time Series}
 \description{
-  Compute a lagged version of a time series, shifting the time base
-  forward by a given number of observations. \code{lag} creates a single
-  lagged series, while \code{lags} can create several lags at once.
+  \code{lag} creates a lagged version of a time series, shifting the time base
+  forward by a given number of observations. \code{Lag} does exactly the
+  opposite, shifting the time base backwards by the given number of
+  observations.  \code{lag} and \code{Lag} create a single lagged
+  series, while \code{lags} and \code{Lags} can create a multivariate
+  series with several lags at once.
 }
 \usage{
-\method{lag}{default}(x, k = 1, ...)
 \method{lag}{tis}(x, k = 1, ...)
+
+Lag(x, k = 1, ...)
 lags(x, lags, name = "")
+Lags(x, lags, name = "")
 }
 \arguments{
   \item{x}{A vector or matrix or univariate or multivariate time series
 	(including \code{tis} series)}
-  \item{k}{The number of lags}
+  \item{k}{The number of lags. For \code{lag}, this is
+	the number of time periods that the series is shifted \emph{forward},
+	while for \code{Lag} it is the number of periods that the series is
+	shifted \emph{backwards}.} 
   \item{\dots}{further arguments to be passed to or from methods}
-  \item{lags}{vector of lag numbers}
+  \item{lags}{vector of lag numbers. For code \code{lags}, each element
+	gives a number of periods by which \code{x} is to be shifted
+	\emph{forward}, while for \code{Lags}, each element gives a number
+	of periods by which \code{x} is to be shifted \emph{backwards}.}
   \item{name}{string or a character vector of names to be used in
 	constructing column names for the returned series}
 }
@@ -41,11 +53,4 @@ lags(x, lags, name = "")
   lag, with \code{NA}'s filling in where appropriate. 
 }
 \author{ Jeff Hallman }
-\note{
-  These versions of \code{lag} reverse the meaning of the sign of
-  \code{k}.  The standard \R version of \code{lag} says that a series
-  lagged by a positive \code{k} starts \emph{earlier}.  The opposite is
-  true for this version, to maintain consistency with the common usage
-  of 'first lag, second lag' and so on here at Federal Reserve Board. 
-}
 \keyword{ ts }
