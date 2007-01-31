@@ -12,13 +12,16 @@ AC_ARG_WITH([fameHliDir],
 if test [ -n "$hliDir" ] ; then
    AC_SUBST([CPPFLAGS], ["PKG_CPPFLAGS= -I${hliDir} -Dfame"])
    AC_SUBST([LIBS], ["PKG_LIBS= -L${hliDir} -lm -lc -lcrypt -lchli"])
+   AC_SUBST([HAVE_FAME], ["TRUE"])
 else
    AC_MSG_NOTICE("Fame HLI directory not specified via FAME environment variable")
    AC_MSG_NOTICE("Fame HLI directory not specified via --with-fameHliDir argument")
    AC_MSG_WARN("No HLI directory was specified so FAME support will not be compiled. See the README file for help")
    AC_SUBST([CPPFLAGS], [""])
    AC_SUBST([LIBS], [""])
+   AC_SUBST([HAVE_FAME], ["TRUE"])
 fi
 
 AC_CONFIG_FILES([src/Makevars])
+AC_CONFIG_FILES([R/unix/zzz.R])
 AC_OUTPUT

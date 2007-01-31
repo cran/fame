@@ -297,7 +297,7 @@ window.tis <- function(x, start = NULL, end = NULL, extend = F, ...){
   y
 }
 
-as.matrix.tis <- function(x){
+as.matrix.tis <- function(x, ...){
   if(length(dim(x)) != 2)
     dim(x) <- c(length(x), 1)
   x

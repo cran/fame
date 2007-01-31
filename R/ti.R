@@ -234,6 +234,8 @@ jul.default <- function(x, ...){
   else                 return(jul.Date(as.Date(x, ...)))
 }
 
+as.character.jul <- function (x, ...) format(x, ...)
+
 c.jul <- function(..., recursive = F)
   structure(c(unlist(lapply(list(...), unclass))), class = "jul")
 
@@ -436,6 +438,8 @@ period <- function(x){
     stripClass(x, "ti") %% 1e10
   else NULL
 }
+
+as.character.ti <- function (x, ...) format(x, ...)
 
 c.ti <- function(..., recursive = F)
   structure(c(unlist(lapply(list(...), unclass))), class = "ti")

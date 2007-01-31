@@ -271,7 +271,7 @@ PACKAGE_VERSION='0.99'
 PACKAGE_STRING='fame 0.99'
 PACKAGE_BUGREPORT=''
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CPPFLAGS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CPPFLAGS HAVE_FAME LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1248,20 +1248,26 @@ if test  -n "$hliDir"  ; then
 
    LIBS="PKG_LIBS= -L${hliDir} -lm -lc -lcrypt -lchli"
 
+   HAVE_FAME="TRUE"
+
 else
    { echo "$as_me:$LINENO: \"Fame HLI directory not specified via FAME environment variable\"" >&5
 echo "$as_me: \"Fame HLI directory not specified via FAME environment variable\"" >&6;}
    { echo "$as_me:$LINENO: \"Fame HLI directory not specified via --with-fameHliDir argument\"" >&5
 echo "$as_me: \"Fame HLI directory not specified via --with-fameHliDir argument\"" >&6;}
-   { echo "$as_me:$LINENO: WARNING: \"No HLI directory was specified so FAME support will not be compiled\"" >&5
-echo "$as_me: WARNING: \"No HLI directory was specified so FAME support will not be compiled\"" >&2;}
+   { echo "$as_me:$LINENO: WARNING: \"No HLI directory was specified so FAME support will not be compiled. See the README file for help\"" >&5
+echo "$as_me: WARNING: \"No HLI directory was specified so FAME support will not be compiled. See the README file for help\"" >&2;}
    CPPFLAGS=""
 
    LIBS=""
 
+   HAVE_FAME="TRUE"
+
 fi
 
           ac_config_files="$ac_config_files src/Makevars"
+
+          ac_config_files="$ac_config_files R/unix/zzz.R"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -1814,6 +1820,7 @@ do
   case "$ac_config_target" in
   # Handling of arguments.
   "src/Makevars" ) CONFIG_FILES="$CONFIG_FILES src/Makevars" ;;
+  "R/unix/zzz.R" ) CONFIG_FILES="$CONFIG_FILES R/unix/zzz.R" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;
@@ -1898,6 +1905,7 @@ s,@ECHO_N@,$ECHO_N,;t t
 s,@ECHO_T@,$ECHO_T,;t t
 s,@LIBS@,$LIBS,;t t
 s,@CPPFLAGS@,$CPPFLAGS,;t t
+s,@HAVE_FAME@,$HAVE_FAME,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF
