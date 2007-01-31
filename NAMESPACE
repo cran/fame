@@ -1,9 +1,6 @@
 import(stats)
 import(utils)
 
-## exports from BUGFIXES
-## export(assign, tk_select.list)
-
 useDynLib(fame)
 export(addLast, askForPassword, askForString, as.jul, as.POSIXlt, as.ssDate,
        as.ti, as.tis, availablePort, badClassStop, basis, "basis<-", between,
@@ -58,6 +55,8 @@ S3method("[", tis)
 S3method("[<-", tis)
 S3method(aggregate, tis)
 S3method(aggregate, ts)
+S3method(as.character, jul)
+S3method(as.character, ti)
 S3method(as.data.frame, tis)
 S3method(as.Date, jul)
 S3method(as.Date, ti)
