@@ -5,15 +5,16 @@
 
 fameRunning <- function(){
   ## are we already running a Fame Server process?
-  if(Sys.info()[1] == "Linux"){
-    cmd <- paste("pgrep -fU", user(), "-P", pid(), "'FAME SERVER'")
-    as.logical(length(system(cmd, intern = T)))
-  }
-  else {
-    cmd <- paste("ps -ef | grep", Sys.info()["user"], "| grep", Sys.getpid(),
-                 "| grep -v grep | grep -c 'FAME SERVER'")
-    as.logical(as.numeric(system(cmd, intern = T)))
-  }
+  if(runningLinux()) pscmd <- "ps xo user,ppid,command"
+  else               pscmd <- "ps -xo user,ppid,command"
+
+  cmd <- paste(pscmd, 
+               "| grep", user(),
+               "| grep", pid(),
+               "| grep -i fame | grep -v defunct | grep -v exiting",
+               "| grep -v", shQuote(pscmd))
+  
+  length(system(cmd, intern = T)) > 0
 }
 
 fameStop <- function(){
@@ -103,9 +104,10 @@ fameDeleteObject <- function(dbKey, fname){
 getFamePath <- function(dbString){
   ## define fameLocalPath if you have a way to find the path to a database 
   ## return NULL if database corresponding to dbString could not be found
-  if(exists("fameLocalPath", mode = "function"))
+  if(exists("fameLocalPath", mode = "function")){
     path <- fameLocalPath(dbString)
-  else path <- dbString
+    if(path != dbString) return(path)
+  }
   if(system(paste("test -r", path), intern = F) == 0)
     path
   else NULL

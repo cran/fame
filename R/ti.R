@@ -259,7 +259,7 @@ max.jul <- function(..., na.rm = F)
 format.jul <- function(x, ...) format(as.POSIXlt(x), ...)
 
 print.jul <- function(x, ...){
-  ymds <- as.character(ymd(floor(x)))
+  ymds <- as.character(floor(ymd(x)))
   hmsList <- hms(x)
   if(sum(unlist(hmsList)) > 0){
     ymds <- paste(ymds,
@@ -626,6 +626,10 @@ as.POSIXlt.default <- function(x, tz = "", ...){
 julToTi <- function(jul, tif, must.handle=F){
   nTif <- tif(tif)
   j <- unclass(jul)
+
+  if(!isIntradayTif(nTif))
+    j <- ceiling(j - 1/(86400*2))
+
   if(between(nTif, 1001, 1009) || between(nTif, 1011, 1025)){
     period <- switch(nTif - 1e3,  ## handle day-based freqs
                      ## 1 = daily

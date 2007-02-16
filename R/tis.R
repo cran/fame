@@ -143,40 +143,10 @@ cumsum.tis <- function(x){
   tis(xs, start = start(x))
 }
 
-
-
-
-filter <- function(x, ...) UseMethod("filter")
-
-filter.tis <- function(x, ...) naWindow(tis(filter.default(x, ...), start = start(x)))
-
-filter.default <- function(x, filter, method = c("convolution", "recursive"), 
-                           sides = 2, circular = FALSE, init = NULL, ...){
-  fun <- get("filter", pos = "package:stats", mode = "function")
-  fun(x, filter, method = method, sides = sides, circular=circular, init=init)
-}
-
 frequency.tis <- function(x, ...) frequency(start(x))
 deltat.tis <- function(x, ...) 1/frequency(x)
 cycle.tis <- function(x, ...) cycle(ti(x))
 time.tis <- function(x, ...)  time(ti(x), ...)
-
-
-rowSums <- function(x, ...) UseMethod("rowSums")
-rowSums.default <- function(x, na.rm = FALSE, dims = 1, ...){
-  get("rowSums", pos = "package:base")(x, na.rm, dims)
-}
-rowSums.tis <- function(x, ...){
-  tis(rowSums(stripTis(x), ...), start = start(x))
-}
-
-rowMeans <- function(x, ...) UseMethod("rowMeans")
-rowMeans.default <- function(x, na.rm = FALSE, dims = 1, ...){
-  get("rowMeans", pos = "package:base")(x, na.rm, dims)
-}
-rowMeans.tis <- function(x, ...){
-  tis(rowMeans(stripTis(x), ...), start = start(x))
-}
 
 dateRange <- function(x){
   if(is.tis(x)) start(x) + c(0, NROW(x) - 1)

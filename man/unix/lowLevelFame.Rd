@@ -123,5 +123,5 @@ fameWhat(dbKey, fname, getDoc = F)
   \code{fameWhat} returns a list.
 }
 \author{ Jeff Hallman }
-\seealso{ \code{\link{getfame}}, \code{\link{putfame}}}
+\seealso{ \code{\link{getfame}}, \code{\link{putfame}}, \code{\link{fameCustomization}}}
 \keyword{ database }

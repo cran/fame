@@ -15,10 +15,10 @@ edit.tis <- function(name, transpose = F, ...){
   }
 
   if(transpose){
-    z <- t(edit.default(t(inmat), ...))
+    z <- t(edit(t(inmat), ...))
   }
   else {
-    z <- edit.default(inmat, ...)
+    z <- edit(inmat, ...)
   }
   mode(z) <- mode(name)
   outser <- tis(z, start = as.numeric(dimnames(z)[[1]][1]), tif = tif(name))
@@ -44,7 +44,7 @@ edit.ti <- function(name, header = character(0), ...){
   inmat <- matrix(paste(ymd(z), format(tifName(z)), sep = " : "), ncol = ncol(z))
   if(!is.null(rn <- rownames(z))) rownames(inmat) <- rn
   if(!is.null(cn <- colnames(z))) colnames(inmat) <- cn
-  outmat <- edit.default(inmat, header = c(header,
+  outmat <- edit(inmat, header = c(header,
                                   "ti dates shown as ymd : tifName"), ...)
   splitlist <- strsplit(outmat, split = ":")
   ymds <- as.numeric(stripBlanks(sapply(splitlist, "[", 1)))

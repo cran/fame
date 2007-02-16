@@ -15,7 +15,7 @@ export(addLast, askForPassword, askForString, as.jul, as.POSIXlt, as.ssDate,
        dateRange, day, dayOfMonth, dayOfPeriod, dayOfWeek, dayOfYear,
        description, "description<-", documentation, "documentation<-",
        easter, endServerSession, ensureValidServer,
-       fameWhats, fameWildlist, fanSeries, federalHolidays, filter,
+       fameWhats, fameWildlist, fanSeries, federalHolidays, Filter,
        firstBusinessDayOf, firstBusinessDayOfMonth, firstDayOf,
        getfame, goodFriday, groups,
        growth.rate, "growth.rate<-", hexidecimal, hex2numeric, hms,
@@ -33,7 +33,7 @@ export(addLast, askForPassword, askForString, as.jul, as.POSIXlt, as.ssDate,
        month, naWindow, nextBusinessDay, observed, "observed<-",
        pad.string, pgid, pid, portsInUse, ppid, previousBusinessDay,
        putfame, pwd, quarter, receiveFromServer, receiveSocketObject,
-       rowMeans, rowSums, rows, runningLinux, runningWindows,
+       RowMeans, RowSums, rows, runningLinux, runningWindows,
        secondly, sendExpression, sendSocketObject, sendToServer,
        serveHostAndPort, serverSession, setDefaultFrequencies, ssDate, ssh,
        "start<-", startRemoteServer, stripClass,
@@ -90,8 +90,8 @@ S3method(diff, tis)
 S3method(edit, ti)
 S3method(edit, tis)
 S3method(end, tis)
-S3method(filter, default)
-S3method(filter, tis)
+S3method(Filter, default)
+S3method(Filter, tis)
 S3method(format, default)
 S3method(format, jul)
 S3method(format, POSIXct)
@@ -127,10 +127,10 @@ S3method(quarters, default)
 S3method(rep, jul)
 S3method(rep, ssDate)
 S3method(rep, ti)
-S3method(rowMeans, default)
-S3method(rowMeans, tis)
-S3method(rowSums, default)
-S3method(rowSums, tis)
+S3method(RowMeans, default)
+S3method(RowMeans, tis)
+S3method(RowSums, default)
+S3method(RowSums, tis)
 S3method(seq, jul)
 S3method(seq, ssDate)
 S3method(seq, ti)
@@ -165,3 +165,4 @@ export(alarmc, fameCommand, fameDbClose, fameDbOpen, fameDeleteObject,
        fameRunning, fameStart, fameStatusMessage, fameStop,
        fameWhat, fameWriteSeries )
 }
+

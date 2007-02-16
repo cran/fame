@@ -1,14 +1,14 @@
 \name{naWindow}
 \alias{naWindow}
 \title{Exclude NA Observations}
-\description{Windows a \code{tis} series to cut off leading and trailing
+\description{Windows a \code{tis} or \code{ts} time series to cut off leading and trailing
   NA observations.
 }
 \usage{
 naWindow(x, union = F)
 }
 \arguments{
-  \item{x}{a \code{tis} time indexed series}
+  \item{x}{a \code{tis} or \code{ts} time series}
   \item{union}{see details below}
 }
 \details{

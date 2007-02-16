@@ -37,16 +37,16 @@ tiBusiness <- function(xTi, offset = 1){
 }
 
 firstDayOf <- function(xTi)
-  ti(jul(xTi, offset = 0), "daily")
+  ti(jul(xTi - 1) + 1, "daily")
 
 lastDayOf <- function(xTi)
-  ti(jul(xTi, offset = 1), "daily")
+  ti(jul(xTi), "daily")
 
 firstBusinessDayOf <- function(xTi)
-  ti(jul(xTi, offset = 0), "business")
+  ti(jul(xTi - 1) + 1, "business")
 
 lastBusinessDayOf <- function(xTi)
-  ti(jul(xTi + 1, offset = 0), "business") - 1
+  firstBusinessDayOf(xTi + 1) - 1
 
 lastBusinessDayOfMonth <- function(xTi){
   ## return ti for last business day of the month of xTi

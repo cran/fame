@@ -9,12 +9,14 @@ convert <- function(x, tif, method = "constant", observed. = observed(x),
   m <- ncol(x)
   idates <- ti(x)
 
+  ## make sure basis. and observed. are set to proper values
   if(is.null(observed.)) observed. <- "averaged"
   if(is.null(basis.))    basis.    <- "daily"
-  observed(x) <- match.arg(observed., c("beginning", "ending", "summed",
-                                        "averaged", "annualized"))
-  basis(x) <- match.arg(basis., c("daily", "business"))
-  method. <- match.arg(method, c("discrete", "constant", "linear", "cubic"))
+  observed(x) <- observed. <- match.arg(observed.,
+                                        c("beginning", "ending", "summed",
+                                          "averaged", "annualized"))
+  basis(x) <- basis. <- match.arg(basis., c("daily", "business"))
+  method. <- method. <- match.arg(method, c("discrete", "constant", "linear", "cubic"))
 
   bTif <- basis(x)
   xTif <- tif(x)
