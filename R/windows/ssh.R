@@ -11,13 +11,13 @@ ssh <- function(command, host = getOption("remoteHost"),
     canHide <- length(grep("hide_console", plinkUsage)) > 0
     
     if(is.null(host)){
-      host <- askForString(prompt = "Remote host: ")
+      host <- get("askForString", pos = 1)(prompt = "Remote host")
       options(remoteHost = host)
     }
     
     if(password == ""){
-      passwordPrompt <- paste("Password on ", host, ": ", sep = "")
-      password <- askForPassword(passwordPrompt)
+      passwordPrompt <- paste("Password on", host)
+      password <- get("askForPassword", pos = 1)(passwordPrompt)
     }
     
     sshCmd <- paste("plink -ssh -l", user.,

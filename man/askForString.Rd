@@ -7,8 +7,8 @@
   which \R is running.
 }
 \usage{
-askForString(prompt = "?: ", default = "")
-askForPassword(prompt = "Password: ")
+askForString(prompt = "?", default = "")
+askForPassword(prompt = "Password")
 }
 \arguments{
   \item{prompt}{Prompt to show when asking for user input}

@@ -10,7 +10,7 @@
   essentially just an alias for \code{format}.
 }
 \usage{
-\method{format}{ti}(x, ..., tz = "GMT")
+\method{format}{ti}(x, ..., tz = "")
 \method{format}{jul}(x, ...)
 \method{as.character}{ti}(x, ...)
 \method{as.character}{jul}(x, ...)

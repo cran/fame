@@ -7,7 +7,7 @@ ssh <- function(command, host = getOption("remoteHost"),
   }
   else {
     if(is.null(host)){
-      host <- askForString(prompt = "DNS name of remote host:")
+      host <- get("askForString", pos = 1)(prompt = "DNS name of remote host:")
       options(remoteHost = host)
     }
     cmd <- paste(if(wait) "ssh -l" else "ssh -fl",

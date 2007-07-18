@@ -2,7 +2,7 @@ import(stats)
 import(utils)
 
 useDynLib(fame)
-export(addLast, askForPassword, askForString, as.jul, as.POSIXlt, as.ssDate,
+export(addLast, askForPassword, askForString, assignList, as.jul, as.ssDate,
        as.ti, as.tis, availablePort, badClassStop, basis, "basis<-", between,
        blanks, columns, commandLineString, convert, couldBeTi, csv, 
        currentSunday, currentMonday, currentTuesday, currentWednesday,
@@ -31,7 +31,7 @@ export(addLast, askForPassword, askForString, as.jul, as.POSIXlt, as.ssDate,
        latestWeek, latestMonth, latestQuarter, latestHalf, latestQ4, latestYear,
        latestMonthDay, lintegrate, mergeSeries, minutely,
        month, naWindow, nextBusinessDay, observed, "observed<-",
-       pad.string, pgid, pid, portsInUse, ppid, previousBusinessDay,
+       pad.string, pgid, pid, portsInUse, POSIXct, POSIXlt, ppid, previousBusinessDay,
        putfame, pwd, quarter, receiveFromServer, receiveSocketObject,
        RowMeans, RowSums, rows, runningLinux, runningWindows,
        secondly, sendExpression, sendSocketObject, sendToServer,
@@ -61,13 +61,6 @@ S3method(as.data.frame, tis)
 S3method(as.Date, jul)
 S3method(as.Date, ti)
 S3method(as.matrix, tis)
-S3method(as.POSIXct, jul)
-S3method(as.POSIXct, ti)
-S3method(as.POSIXlt, Date)
-S3method(as.POSIXlt, default)
-S3method(as.POSIXlt, jul)
-S3method(as.POSIXlt, POSIXlt)
-S3method(as.POSIXlt, ti)
 S3method(as.tis, default)
 S3method(as.tis, tis)
 S3method(as.tis, ts)
@@ -102,6 +95,8 @@ S3method(frequency, tis)
 S3method(jul, Date)
 S3method(jul, default)
 S3method(jul, jul)
+S3method(jul, POSIXct)
+S3method(jul, POSIXlt)
 S3method(jul, ssDate)
 S3method(jul, ti)
 S3method(lag, tis)
@@ -118,6 +113,14 @@ S3method(Ops, ssDate)
 S3method(Ops, ti)
 S3method(Ops, tis)
 S3method(points, tis)
+S3method(POSIXct, jul)
+S3method(POSIXct, ti)
+S3method(POSIXct, default)
+S3method(POSIXct, POSIXt)
+S3method(POSIXlt, jul)
+S3method(POSIXlt, ti)
+S3method(POSIXlt, POSIXt)
+S3method(POSIXlt, default)
 S3method(print, jul)
 S3method(print, serverSession)
 S3method(print, ssDate)
@@ -139,6 +142,8 @@ S3method(start, tis)
 S3method(ti, Date)
 S3method(ti, default)
 S3method(ti, jul)
+S3method(ti, POSIXct)
+S3method(ti, POSIXlt)
 S3method(ti, ssDate)
 S3method(ti, ti)
 S3method(ti, tis)
@@ -150,6 +155,8 @@ S3method(tif, ti)
 S3method(tif, tis)
 S3method(tif, ts)
 S3method(time, jul)
+S3method(time, POSIXct)
+S3method(time, POSIXlt)
 S3method(time, ssDate)
 S3method(time, ti)
 S3method(time, tis)

@@ -158,9 +158,13 @@ lag.tis <- function(x, k = 1, ...){
   x
 }
 
-lines.tis <- function (x, midPoints = T, offset = 1, dropNA = F, ...){
-  if (missing(offset) && midPoints) offset <- 1/2
-  xt <- time(x, offset = offset)
+lines.tis <- function(x, offset = 0.5, dropNA = FALSE, ...){
+  xcts    <- POSIXct(ti(x), offset = offset)
+  xtimes  <- time(xcts)
+  xrange  <- par("usr")[1:2]
+  ctSum   <- sum(between(unclass(xcts), xrange[1], xrange[2]))
+  timeSum <- sum(between(xtimes, xrange[1], xrange[2]))
+  xt <- if(ctSum > timeSum) xcts else xtimes
   if(dropNA){
     naSpots <- is.na(x)
     xt <- xt[!naSpots]
@@ -194,7 +198,7 @@ diff.tis <- function(x, lag = 1, differences = 1, ...){
   tis(z, start = zStart)
 }
 
-window.tis <- function(x, start = NULL, end = NULL, extend = F, ...){
+window.tis <- function(x, start = NULL, end = NULL, extend = FALSE, noWarn = FALSE, ...){
   xStart <- start(x)
   xEnd   <- end(x)
   xDim   <- dim(x)
@@ -209,7 +213,7 @@ window.tis <- function(x, start = NULL, end = NULL, extend = F, ...){
  
   if(yStart < xStart && !extend){
     yStart <- xStart
-    warning("start value of series not changed")
+    if(!noWarn) warning("start value of series not changed")
   }
   
   ## figure yEnd
@@ -220,7 +224,7 @@ window.tis <- function(x, start = NULL, end = NULL, extend = F, ...){
 
   if(yEnd > xEnd && !extend){
     yEnd <- xEnd
-    warning("end value of series not changed")
+    if(!noWarn) warning("end value of series not changed")
   }
 
   if(yStart > yEnd) stop("start cannot be after end")
@@ -318,9 +322,13 @@ Ops.tis <- function(e1, e2){
   return(result)
 }
 
-points.tis <- function (x, midPoints = T, offset = 1, dropNA = F, ...){
-  if (missing(offset) && midPoints) offset <- 1/2
-  xt <- time(x, offset = offset)
+points.tis <- function(x, offset = 0.5, dropNA = FALSE, ...){
+  xcts    <- POSIXct(ti(x), offset = offset)
+  xtimes  <- time(xcts)
+  xrange  <- par("usr")[1:2]
+  ctSum   <- sum(between(unclass(xcts), xrange[1], xrange[2]))
+  timeSum <- sum(between(xtimes, xrange[1], xrange[2]))
+  xt <- if(ctSum > timeSum) xcts else xtimes
   if(dropNA){
     naSpots <- is.na(x)
     xt <- xt[!naSpots]
@@ -574,4 +582,16 @@ mergeSeries <- function(x, y, differences=F){
   start(x) <- xStart
   class(x) <- c("tis", class(x))
   x
+}
+
+head.tis <- function(x, n = 6, ...){
+  z <- head(x, n = n, ...)
+  start(z) <- start(x)
+  z
+}
+
+tail.tis <- function(x, n = 6, ...){
+  z <- tail(x, n = n, ...)
+  start(z) <- end(x) - NROW(z)
+  z
 }

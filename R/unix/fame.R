@@ -108,6 +108,8 @@ getFamePath <- function(dbString){
     path <- fameLocalPath(dbString)
     if(path != dbString) return(path)
   }
+  else path <- dbString
+  
   if(system(paste("test -r", path), intern = F) == 0)
     path
   else NULL
@@ -467,16 +469,21 @@ fameWhats <- function(db, fname, getDoc = T){
   }
   ## higher level (and slower) version of fameWhat()
   z <- fameWhat(dbKey, fname, getDoc)
+  if(z$status != 0){
+    warning(fameStatusMessage(z$status))
+    return(NULL)
+  }
   
   zz <- list(name     = tolower(z$name),
              class    = names(fameClasses[  match(z$class,  fameClasses)]),
              type     = names(fameTypes[    match(z$type,   fameTypes)]))
-  if(zz$class == "series")
+  if(zz$class == "series"){
     zz <- c(zz, 
             basis    = names(fameBasiss[   match(z$basis,  fameBasiss)]),
             observed = names(fameObserveds[match(z$observ, fameObserveds)]),
-            start    = ti(c(z$fyear, z$fprd), tif = fameToTif(z$freq)),
             length   = z$obs)
+    zz$start <- ti(c(z$fyear, z$fprd), tif = fameToTif(z$freq))
+  }
   if(getDoc){
     zz$des <- z$des
     zz$doc <- z$doc

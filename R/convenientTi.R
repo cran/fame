@@ -8,7 +8,7 @@ today <- function(){
 
 dayOfPeriod <- function(xTi = today(), tif = NULL){
   if(is.null(tif)) stop("Bad or missing tif")
-  julianDates <- jul(xTi)
+  julianDates <- floor(jul(xTi))
   prevPeriodEnds <- jul(ti(julianDates, tif) - 1)
   julianDates - prevPeriodEnds
 }

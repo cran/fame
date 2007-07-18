@@ -6,26 +6,18 @@
   Plotting methods for \code{tis} objects
 }
 \usage{
-\method{lines}{tis}(x, midPoints = T, offset = 1, dropNA = F, ...)
-\method{points}{tis}(x, midPoints = T, offset = 1, dropNA = F, ...)
+\method{lines}{tis}(x, offset = 0.5, dropNA = FALSE, ...)
+\method{points}{tis}(x, offset = 0.5, dropNA = FALSE, ...)
 }
 \arguments{
   \item{x}{
 	a \code{tis} (time indexed series) object
   }
-  \item{midPoints}{
-	if \code{TRUE} (the default) and if \code{offset} was
-	not specified, then \code{offset} is set to 0.5.
-  }
   \item{offset}{
 	a number in the range [0,1] telling where in each period of \code{x}
-	to find the day on which to plot the point. 0 means the first 
-	day of each period; the default value 1 plots on the last day of
-	each period.  For example, if \code{x} has \code{tif} = "wmonday" so
-	that each observation represents a week ending on Monday, than any
-	\code{offset} in the range [0, 1/7] will plot points on Tuesdays, 
-	while \code{offset} in the range (1/7, 2/7] will plot on Wednesdays,
-	\code{offset} in the range (6/7, 1] will plot on Mondays, and so on.
+	to plot the point. 0 means the first second of each period, 1 the
+	last second of the period, and the default 0.5 plots each point in
+	the middle of the time period in which it falls.
   }
   \item{dropNA}{ if \code{TRUE}, observations with \code{NA} values are
 	dropped before calling \code{lines.default} or

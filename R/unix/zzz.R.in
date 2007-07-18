@@ -2,6 +2,10 @@
   if(!exists("Sys.setenv", baseenv()))
     Sys.setenv <- base::Sys.putenv
   setDefaultFrequencies(setup = TRUE)
+  assign("tzOffsetSeconds",
+         as.vector(unclass(ISOdatetime(2007,1,1,0,0,0, "")) - 
+                   unclass(ISOdatetime(2007,1,1,0,0,0, "GMT"))),
+         env = globalenv())
   addLast(.Last.fame)
 
   if(@HAVE_FAME@){

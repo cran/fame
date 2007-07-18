@@ -8,7 +8,7 @@
   between the times \code{start} and \code{end}. 
 }
 \usage{
-\method{window}{tis}(x, start = NULL, end = NULL, extend = F, ...)
+\method{window}{tis}(x, start = NULL, end = NULL, extend = FALSE, noWarn = FALSE, ...)
 }
 \arguments{
   \item{x}{
@@ -21,9 +21,15 @@
 	the end time of the period of interest.
   }
   \item{extend}{
-	logical.  If true, the \code{start} and \code{end} values are
-	allowed to extend the series. If false, attempts to extend the
-	series give a warning and are ignored. 
+	logical.  If \code{TRUE}, the \code{start} and \code{end} values are
+	allowed to extend the series. If \code{FALSE}, attempts to extend the
+	series are ignored and a warning is issued unless \code{noWarn} is \code{FALSE}. 
+  }
+  \item{noWarn}{
+	logical.  If \code{FALSE} (the default), warnings are generated if
+	\code{extend} is \code{FALSE} and either (i) \code{start} is
+	earlier than the start of the series or (ii) \code{end} is later
+	than the end of the series.
   }
   \item{\dots}{
 	other arguments to this function are ignored.

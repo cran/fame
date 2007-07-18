@@ -37,17 +37,20 @@ tisFromCsv <- function(csvFile,
   }
   cn <- colnames(z) 
 
+  if(length(grep("%d", dateFormat)) == 0){
+    dateFormat <- paste(dateFormat, "%d")
+    zDateStrings <- paste(zDateStrings, "1")
+  }
   dtJul <- jul(zDateStrings, format = dateFormat)
   if(NCOL(z) == 0) stop("No non-NA values in file")
   freq <- round(365.25/median(diff(dtJul)))
   if(is.na(freq)) freq <- tif2freq(defaultTif)
   ## get nearest ti for each dt
-  dtTime <- time(dtJul) - 1/(2*freq)
+  dtTime <- time(dtJul)
   if(freq == 365 && all(between(dayOfWeek(dtJul), 2, 6)))
     dtTi <- ti(dtTime, tif = "business")
   else 
     dtTi <- ti(dtTime, freq = freq)
-  
   if(median(abs(jul(dtTi) - dtJul)) > 0.5){ ## could be wrong ti
     if(freq == 52){
       newTif <- tif("wsunday") + dayOfWeek(max(dtJul)) - 1
@@ -76,13 +79,14 @@ tisFromCsv <- function(csvFile,
       dtTi <- ti(dtTime, tif = newTif)
     }
   }
-  zSeries <- tis(NA, start = dtTi[1], end = dtTi[length(dtTi)])
+  zStart <- dtTi[1]
+  zEnd   <- tail(dtTi, 1)
+  zSeries <- tis(matrix(NA, zEnd - zStart + 1, ncol(z)), start = zStart)
   zSeries[dtTi,] <- z
+  class(zSeries) <- "tis"
+  colnames(zSeries) <- colnames(z)
   retList <- lapply(columns(zSeries), naWindow)
-  if(save){
-    for(rln in names(retList))
-      assign(rln, retList[[rln]], env = envir)
-  }
+  if(save) assignList(retList, env = envir)
   gc()
 
   if(save)

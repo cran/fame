@@ -1,7 +1,5 @@
 ## Date representations:
-## For yp, c(year, period) is encoded as year*1e8 + period
-## For ymd, c(year, month, day, hour, minute, second) is encoded as
-##    year*10000 + month *100 + day + (3600*hour + 60*minute + second)/86400
+## A ymd is always an integer: year*10000 + month *100 + day
 ## For jul, c(julianDay, hour, minute, second) is encoded as
 ##    day + (3600*hour + 60*minute + second)/86400
 ## For ti (Time Index), c(tif, period) is encoded as tif*1e10 + period
@@ -22,17 +20,10 @@ as.jul <- function(x) structure(x, class = "jul")
 
 year   <- function(x, ...) ymd(x, ...) %/% 10000
 month  <- function(x, ...) (ymd(x, ...) %/% 100) %% 100
-day    <- function(x, ...) ymd(x, ...) %% 100
+day    <- function(x, ...) floor(ymd(x, ...) %% 100)
 quarter <- function(x, ...) (month(x, ...) + 2) %/% 3
 
 ##From julian date to others
-jul2time <- function(jul){
-  y <- jul2ymd(jul) %/% 10000
-  day <- unclass(1 + jul - ymd2jul(10000*y + 101))
-  daysInYear <- 365 + isLeapYear(y)
-  return(y + day/daysInYear)
-}
-
 jul2ti <- function(jul, tif){
   tifLen <- length(tif)
   if(tifLen > 1 && length(uniq <- unique(tif)) > 1){
@@ -51,7 +42,6 @@ jul2ti <- function(jul, tif){
 
 jul2ymd <- function(jul){
   jul <- unclass(jul)
-  seconds <- round((jul*86400) %% 86400)
   rjul <- jul %/% 1
   j <- as.vector(rjul) - 1721119
   y <- (4*j - 1) %/% 146097
@@ -66,12 +56,10 @@ jul2ymd <- function(jul){
   y <- 100*y + j
   y <- y + as.numeric(m > 9)
   m <- m + ifelse(m < 10, 3, -9)
-  ans <- 10000*y + 100*m + d + seconds/86400
+  ans <- 10000*y + 100*m + d 
   attributes(ans) <- attributes(jul)
   return(ans)
 }
-
-jul2yp <- function(jul, tif) ti2yp(jul2ti(jul, tif))
 
 ## From ti to others
 ti2jul <- function(ti){
@@ -88,8 +76,6 @@ ti2jul <- function(ti){
   else return(tiToJul(ti))
 }
 
-ti2time <- function(x) jul2time(ti2jul(x))
-
 ti2ymd <- function(ti){
   tif <- tif(ti)
   if(length(uniq <- unique(tif)) > 1){
@@ -102,28 +88,6 @@ ti2ymd <- function(ti){
   }
   else return(tiToYmd(ti))
 }
-
-ti2yp <- function(x){
-  y <- ti2ymd(x) %/% 10000
-  p <- x + 1 - yp2ti(1e8*y + 1, tif(x))
-  return(1e8*y + unclass(p))
-}
-
-## From time [decimal time as returned by time()] to others
-time2jul <- function(time){
-  rawTime <- unclass(time)
-  zeros <- numeric(length(rawTime))
-  y <- floor(rawTime + 1e-8)
-  secondsInYear <- 86400*(zeros + 365 + isLeapYear(y))
-  d <- ceiling(floor(secondsInYear*(rawTime - y) + 0.5)/86400)
-  return(ymd2jul(10000*(y-1) + 1231) + d)
-}
-
-time2ti  <- function(time, tif) jul2ti(time2jul(time), tif)
-
-time2ymd <- function(time)      jul2ymd(time2jul(time))
-
-time2yp  <- function(time, tif) jul2yp(time2jul(time), tif)
 
 ##From ymd to others
 ymd2jul <- function(ymd){
@@ -159,28 +123,6 @@ ymd2ti <- function(ymd, tif){
   else return(ymdToTi(ymd, tif[1]))
 }
 
-ymd2time <- function(ymd) jul2time(ymd2jul(ymd))
-
-ymd2yp <- function(ymd, tif) ti2yp(ymd2ti(ymd, tif))
-
-## From yp (year*1e8 + periodOfYear) conversions
-yp2time <- function(yp, tif, offset = 1)
-  time(yp2ti(yp, tif), offset)
-
-yp2jul <- function(yp, tif, offset = 1)
-  jul(yp2ti(yp, tif), offset)
-
-yp2ti <- function(yp, tif){
-  if(!is.time(yp/1e8)) stop("Bad yp arg")
-  y <- yp %/% 1e8
-  p <- yp %%  1e8
-  ymd2ti(10000*y + 101, tif) + p - 1
-}
-
-yp2ymd <- function(yp, tif, offset = 1)
-  ymd(yp2ti(yp, tif), offset)
-
-
 ## Object oriented wrappers
 ## constructors for class 'jul'
 is.jul <- function(x) inherits(x, "jul")
@@ -189,34 +131,35 @@ jul <- function(x, ...) UseMethod("jul")
 
 jul.jul <- function(x, ...) x
 
+jul.POSIXct <- function(x, ...) jul(POSIXlt(x), ...)
+
+jul.POSIXlt <- function(x, ...){
+  j <- (jul(10000*(x$year + 1900) + 100*(x$mon + 1) + x$mday) +
+        (x$hour/24) + (x$min/1440) + (x$sec/86400))
+  class(j) <- "jul"
+  j
+}
+
 jul.ssDate <- function(x, ...) jul(18991230) + unclass(x)
 
 jul.ti <- function(x, offset = 1, ...){
   z <- stripClass(x, "ti")
   rx <- x
-  rx[] <- floor(unclass(x) + .Machine$double.eps)
+  oneSecond <- 1/86400
   j1 <- unclass(ti2jul(rx))
-  if(missing(offset)){
-    j2 <- unclass(ti2jul(rx + 1))
-    secondsPerPeriod <- 86400*(j2 - j1)
-    fracPart <- round((z %% 1) * secondsPerPeriod)/secondsPerPeriod
-    z[] <- fracPart*j2 + (1 - fracPart)*j1
-  }
+  if(!between(offset, 0, 1)) stop("offset must be in [0,1]")
+  if(offset == 1)
+    z[] <- j1
   else {
-    if(!between(offset, 0, 1)) stop("offset must be in [0,1]")
-    if(offset == 1)
-      z[] <- j1
-    else {
-      j0 <- unclass(ti2jul(rx - 1))
-      oneSecond <- 1/86400
-      if(offset < oneSecond)
-        z[] <- j0 + oneSecond
-      else{
-        z[] <- round((offset*j1 + (1 - offset)*j0)*86400)/86400
-      }
+    j0 <- unclass(ti2jul(rx - 1))
+    if(offset < oneSecond)
+      z[] <- j0 + oneSecond
+    else{
+      z[] <- round((offset*j1 + (1 - offset)*j0)*86400)/86400
     }
   }
-  return(as.jul(z))
+  class(z) <- c(class(z), "jul")
+  return(z)
 }
 
 jul.Date <- function(x, ...)
@@ -226,11 +169,8 @@ jul.default <- function(x, ...){
   if(missing(x))       return(jul.Date(Sys.Date()))
   if(is.character(x))  return(jul.Date(as.Date(x, ...)))
   if(couldBeTi(x))     return(jul(as.ti(x), ...))
-  if(is.ymd(x)){
-    seconds <- round(86400*(unclass(x) %% 1))
-    return(as.jul(ymd2jul(x) + seconds/86400))
-  }
-  if(is.time(x))        return(as.jul(time2jul(x)))
+  if(is.ymd(x))        return(as.jul(ymd2jul(x)))
+  if(is.time(x))       return(as.jul(time2jul(x)))
   else                 return(jul.Date(as.Date(x, ...)))
 }
 
@@ -241,31 +181,22 @@ c.jul <- function(..., recursive = F)
 
 diff.jul <- function(x, ...) diff(stripClass(x, "jul"), ...)
 
-hms <- function(x){
-  seconds <- round((unclass(jul(x)) %% 1)*86400)
-  hours   <- seconds %/% 3600
-  seconds <- seconds %% 3600
-  minutes <- seconds %/% 60
-  seconds <- seconds %% 60
-  list(hours = hours, minutes = minutes, seconds = seconds)
-}
-
 min.jul <- function(..., na.rm = F)
   structure(min(unlist(lapply(list(...), unclass)), na.rm = na.rm), class = "jul")
 
 max.jul <- function(..., na.rm = F)
   structure(max(unlist(lapply(list(...), unclass)), na.rm = na.rm), class = "jul")
 
-format.jul <- function(x, ...) format(as.POSIXlt(x), ...)
+format.jul <- function(x, ...) format(POSIXlt(x), ...)
 
 print.jul <- function(x, ...){
   ymds <- as.character(floor(ymd(x)))
   hmsList <- hms(x)
   if(sum(unlist(hmsList)) > 0){
     ymds <- paste(ymds,
-                  substr(format(100 + hmsList$hours), 2, 3),
-                  substr(format(100 + hmsList$minutes), 2, 3),
-                  substr(format(100 + hmsList$seconds), 2, 3),
+                  substr(format(100 + hmsList$hour), 2, 3),
+                  substr(format(100 + hmsList$min), 2, 3),
+                  substr(format(100 + hmsList$sec), 2, 3),
                   sep = ":")
   }
   names(ymds) <- names(x)
@@ -276,17 +207,6 @@ print.jul <- function(x, ...){
 rep.jul <- function(x, times, ...) as.jul(NextMethod())
 
 seq.jul <- function(...) as.jul(NextMethod())
-
-time.jul <- function(x, offset = 1, ...){
-  if(!between(offset, 0, 1)) stop("offset must be in [0,1]")
-  if(offset == 1) return(jul2time(x))
-  if(offset == 0) return(jul2time(x - 1))
-  else {
-    t0 <- jul2time(x - 1)
-    t1 <- jul2time(x)
-    return(t1 * offset + (1 - offset)*t0)
-  }
-}
 
 "[.jul" <- function(x, ...) as.jul(NextMethod())
 
@@ -330,6 +250,24 @@ ymd.default <- function(x, ...){
   return(jul2ymd(jul))
 }
 
+ymdList <- function(x){
+  z <- ymd(x)
+  list( year = z %/% 10000,
+       month = (z %% 10000) %/% 100,
+         day = floor(z %% 100))
+}
+
+hms <- function(x){
+  seconds <- round((unclass(jul(x)) %% 1)*86400)
+  hour    <- seconds %/% 3600
+  seconds <- seconds %% 3600
+  min     <- seconds %/% 60
+  sec     <- seconds %% 60
+  list(hour = hour, min = min, sec = sec)
+}
+
+ymdhms <- function(x) c(ymdList(x), hms(x))
+
 ## ssDate (spreadsheet date) class
 is.ssDate <- function(x) inherits(x, "ssDate")
 as.ssDate <- function(x) structure(x, class = "ssDate")
@@ -353,7 +291,6 @@ print.ssDate <- function(x, ...){
 
 rep.ssDate <- function(x, times, ...) as.ssDate(NextMethod())
 seq.ssDate <- function(...) as.ssDate(NextMethod())
-time.ssDate <- function(x, offset = 1, ...) time(jul(x), offset)
 "[.ssDate" <- function(x, ...) as.ssDate(NextMethod())
 Ops.ssDate <- function(e1, e2){
   if(nargs() == 1){
@@ -384,12 +321,28 @@ ti <- function(x, ...) UseMethod("ti")
 ti.jul <- function(x, tif = NULL, freq = NULL,
                    hour = 0, minute = 0, second = 0, ...){
   if(is.null(tif)) tif <- freq2tif(freq)
-  if(isIntradayTif(tif)){
+  intraday <- isIntradayTif(tif)
+  if(any(intraday)){
     if(!(missing(hour) && missing(minute) && missing(second)))
-      x <- floor(x + .5/86400) + (3600*hour + 60*minute + second)/86400
+      x[intraday] <- (floor(x + .5/86400) + (3600*hour + 60*minute + second)/86400)[intraday]
   }
   return(jul2ti(x, tif))
 }
+
+ti.POSIXlt <- function(x, tif, ...){
+  nTif <- tif(tif)
+  j <- jul(10000*(x$year + 1900) + 100*(x$mon + 1) + x$mday)
+  intraday <- isIntradayTif(nTif)
+  if(any(intraday)){
+    if(all(intraday))
+      j <- j + (x$hour/24) + (x$min/1440) + (x$sec/86400)
+    else
+      j[intraday] <- (j + (x$hour/24) + (x$min/1440) + (x$sec/86400))[intraday]
+  }
+  ti(j, nTif)
+}
+
+ti.POSIXct <- function(x, tif, ...) ti(POSIXlt(x), tif, ...)
 
 ti.ssDate <- function(x, ...) ti(jul(x), ...)
 
@@ -407,7 +360,7 @@ ti.default <- function(x, tif = NULL, freq = NULL, ...){
   if(is.null(tif))            tif <- freq2tif(freq)
   if(missing(x))              return(ti(jul(Sys.Date()), tif, ...))
   if(is.null(x))              stop("NULL argument to ti function")
-  if(is.character(x))         return(ti(as.Date(x)), tif, ...)
+  if(is.character(x))         return(ti(as.Date(x, ...), tif = tif))
   if(couldBeTi(x, tif = tif)) return(ti(as.ti(x), tif = tif, ...))
   
   if(is.ymd(x)){
@@ -416,11 +369,13 @@ ti.default <- function(x, tif = NULL, freq = NULL, ...){
   }
   if(is.time(x)){
     if(isIntradayTif(tif)) return(ti(as.jul(time2jul(x)), tif, ...))
-    else                   return(ti(as.jul(round(time2jul(x))), tif))
+    else                   return(ti(as.jul(floor(time2jul(x))), tif))
   }
-  if(length(x) == 2 && is.time(x[1]) && between(x[2],1,1e8 - 1))
-    return(yp2ti(1e8*x[1] + x[2], tif))
-  else return(ti(as.Date(x), tif, ...))
+  if(length(x) == 2 && is.time(x[1]) && between(x[2],1,1e10 - 1)){
+    firstTi <- ti(ISOdatetime(year = floor(x[1]), 1, 1, 0, 0, 0), tif = tif)
+    return(firstTi + x[2] - 1)
+  }
+  else return(ti(as.Date(x, ...), tif))
 }
 
 couldBeTi <- function(x, tif = NULL){
@@ -452,7 +407,11 @@ max.ti <- function(..., na.rm = F)
 
 diff.ti <- function(x, ...) diff(stripClass(x, "ti"), ...)
 
-cycle.ti <- function(x, ...) ti2yp(x) %% 1e8
+cycle.ti <- function(x, ...){
+  firstTi <- ti(ISOdatetime(year(x),1,1,0,0,0), tif = tif(x))
+  x - firstTi + 1
+}
+
 frequency.ti <- function(x, ...){
   f <- round(200/(time(x+100) - time(x-100)))
   if(any(index <- f > 100)) ## handle leap years 
@@ -462,13 +421,13 @@ frequency.ti <- function(x, ...){
 
 deltat.ti <- function(x, ...) 1/frequency(x)
 
-format.ti <- function(x, ..., tz = "GMT"){
+format.ti <- function(x, ..., tz = ""){
   z <- stripClass(x, "ti")
   intraday <- isIntradayTif(tif(x))
   if(any(intraday))
-    z[intraday] <- format(as.POSIXct(x[intraday]), tz = tz, ...)
+    z[intraday] <- format(POSIXct(x[intraday]), tz = tz, ...)
   if(any(!intraday))
-    z[!intraday] <- format(as.POSIXlt(x[!intraday]), ...)
+    z[!intraday] <- format(POSIXlt(x[!intraday]), ...)
   z
 }
 
@@ -479,9 +438,9 @@ print.ti <- function(x, ...){
   if(any(intraday)){
     hmsList <- hms(j[intraday])
     ymds[intraday] <- paste(ymds[intraday],
-                            substr(format(100 + hmsList$hours), 2, 3),
-                            substr(format(100 + hmsList$minutes), 2, 3),
-                            substr(format(100 + hmsList$seconds), 2, 3),
+                            substr(format(100 + hmsList$hour), 2, 3),
+                            substr(format(100 + hmsList$min), 2, 3),
+                            substr(format(100 + hmsList$sec), 2, 3),
                             sep = ":")
   }
   names(ymds) <- names(x)
@@ -492,17 +451,6 @@ print.ti <- function(x, ...){
 rep.ti <- function(x, times, ...) as.ti(NextMethod())
 
 seq.ti <- function(...) as.ti(NextMethod())
-
-time.ti <- function(x, offset = 1, ...){
-  if(!between(offset, 0, 1)) stop("offset must be in [0,1]")
-  if(offset == 1) return(ti2time(x))
-  if(offset == 0) return(ti2time(x - 1))
-  else {
-    t0 <- ti2time(x - 1)
-    t1 <- ti2time(x)
-    return(t1 * offset + (1 - offset)*t0)
-  }
-}
 
 "[.ti" <- function(x, ...) as.ti(NextMethod())
 
@@ -564,7 +512,7 @@ format.POSIXlt <- function (x, format = "", usetz = FALSE, ...){
 format.POSIXct <- function (x, format = "", tz = "", usetz = FALSE, ...){
   if(!inherits(x, "POSIXct")) stop("wrong class")
   if(missing(tz) && !is.null(tzone <- attr(x, "tzone"))) tz <- tzone
-  structure(format(as.POSIXlt(x, tz), format, usetz, ...),
+  structure(format(POSIXlt(x, tz), format, usetz, ...),
             names = names(x))
 }
 
@@ -572,68 +520,68 @@ weekdays.default <- function(x, ...) weekdays(as.Date(x), ...)
 months.default   <- function(x, ...) months(as.Date(x), ...)
 quarters.default <- function(x, ...) quarters(as.Date(x), ...)
 
-as.Date.jul        <- function(x, ...)     structure(x - 2440588, class = "Date")
-as.Date.ti         <- function(x, ...)     as.Date(jul(x), ...)
-as.POSIXct.jul     <- function(x, ...)     structure(round(unclass(x - 2440588)*86400), class = c("POSIXt", "POSIXct"))
-as.POSIXct.ti      <- function(x, ...)     as.POSIXct(jul(x), ...)
-as.POSIXlt         <- function(x, tz = "", ...) UseMethod("as.POSIXlt")
-as.POSIXlt.POSIXlt <- function(x, tz, ...)      x
-as.POSIXlt.Date    <- function(x, ...)     .Internal(Date2POSIXlt(x))
-as.POSIXlt.jul     <- function(x, ...)     as.POSIXlt(as.Date(x, ...))
-as.POSIXlt.ti      <- function(x, ...)     as.POSIXlt(jul(x), ...)
+as.Date.jul <- function(x, ...) structure(x - 2440588, class = "Date")
+as.Date.ti  <- function(x, ...) as.Date(jul(x), ...)
 
-as.POSIXlt.default <- function(x, tz = "", ...){
-  fromchar <- function(x){
-    xx <- x[1]
-    if(is.na(xx)){
-      j <- 1
-      while (is.na(xx) && (j <- j + 1) <= length(x)) xx <- x[j]
-      if (is.na(xx)) 
-        f <- "%Y-%m-%d"
+POSIXct <- function(x, ...) UseMethod("POSIXct")
+
+POSIXct.jul <- function(x, ...)
+  do.call("ISOdatetime", c(ymdhms(x), ...))
+
+POSIXct.ti <- function(x, offset = 1, ...){
+  if(!between(offset, 0, 1)) stop("offset must be in [0,1]")
+  
+  tiToPOSIXct <- function(x, hour = 23, min = 59, sec = 59){
+    argList <- ymdList(x)
+    intra <- isIntradayTif(tif(x))
+    hmsList <- list(hour = hour, min = min, sec = sec)
+    if(any(intra)){
+      hmsList <- hms(x)
+      if(!all(intra)){
+        notIntra <- !intra
+        hmsList$hour[notIntra] <- hour
+        hmsList$min[notIntra]  <- min
+        hmsList$sec[notIntra]  <- sec
+      }
     }
-    if(is.na(xx) ||
-       !is.na(strptime(xx, f <- "%Y-%m-%d %H:%M:%S")) || 
-       !is.na(strptime(xx, f <- "%Y/%m/%d %H:%M:%S")) || 
-       !is.na(strptime(xx, f <- "%Y-%m-%d %H:%M")) ||
-       !is.na(strptime(xx, f <- "%Y/%m/%d %H:%M")) ||
-       !is.na(strptime(xx, f <- "%Y-%m-%d")) || 
-       !is.na(strptime(xx, f <- "%Y/%m/%d"))){
-      res <- strptime(x, f)
-      if(nchar(tz)) 
-        attr(res, "tzone") <- tz
-      return(res)
-    }
-    stop("character string is not in a standard unambiguous format")
+    do.call("ISOdatetime", c(ymdList(x), hmsList, ...))
   }
-  tzone <- attr(x, "tzone")
-  if(inherits(x, "date") || inherits(x, "dates")) 
-    x <- as.POSIXct(x)
-  if(is.character(x)) 
-    return(fromchar(x))
-  if(is.factor(x)) 
-    return(fromchar(as.character(x)))
-  if(is.logical(x) && all(is.na(x))) 
-    x <- as.POSIXct.default(x)
-  if(!inherits(x, "POSIXct")) 
-    stop(paste("Don't know how to convert `", deparse(substitute(x)), 
-               "' to class \"POSIXlt\"", sep = ""))
-  if(missing(tz) && !is.null(tzone)) 
-    tz <- tzone[1]
-  .Internal(as.POSIXlt(x, tz))
+  
+  z <- stripClass(x, "ti")
+  ct1 <- unclass(tiToPOSIXct(x))
+  if(offset == 1) z[] <- ct1
+  else {
+    ct0 <- unclass(tiToPOSIXct(x - 1) + 1)
+    z[] <- floor(offset*(ct1 + 1) + (1 - offset)*ct0)
+  }
+  attr(z, "tzone") <- attr(ct1, "tzone")
+  class(z) <- c(class(z), "POSIXt", "POSIXct")
+  return(z)
 }
+
+POSIXct.POSIXt  <- function(x, ...) as.POSIXct(x, ...)
+POSIXct.default <- function(x, ...) POSIXct(jul(x), ...)
+
+POSIXlt         <- function(x, ...) UseMethod("POSIXlt")
+POSIXlt.jul     <- function(x, ...) as.POSIXlt(POSIXct(x, ...))
+POSIXlt.ti      <- function(x, ...) as.POSIXlt(POSIXct(x, ...))
+POSIXlt.POSIXt  <- function(x, ...) as.POSIXlt(x, ...)
+POSIXlt.default <- function(x, ...) POSIXlt(jul(x), ...)
 
 ## workhorse functions that convert ti's back and forth to ymd and jul
 julToTi <- function(jul, tif, must.handle=F){
   nTif <- tif(tif)
   j <- unclass(jul)
 
+  halfSecond <- 1/(86400*2)
   if(!isIntradayTif(nTif))
-    j <- ceiling(j - 1/(86400*2))
+    j <- floor(j + halfSecond)
 
   if(between(nTif, 1001, 1009) || between(nTif, 1011, 1025)){
     period <- switch(nTif - 1e3,  ## handle day-based freqs
                      ## 1 = daily
                      j - 2415019,
+
                      ## 2 = business day
                      { 
                        dow <- julToWeekday(j)
@@ -685,9 +633,9 @@ julToTi <- function(jul, tif, must.handle=F){
     nUnits <- nTif %% 1e3
     if(nUnits == 0) nUnits <- 1
     period <- switch(hms - 1, ## 1 = hourly, 2 = minutely, 3 = secondly
-                     1 + round((j - j19800101)*(24/nUnits)),
-                     1 + round((j - j19800101)*(1440/nUnits)),
-                     1 + round((j - j19800101)*(86400/nUnits)))
+                     1 + floor((j + halfSecond - j19800101)*(24/nUnits)),
+                     1 + floor((j + halfSecond - j19800101)*(1440/nUnits)),
+                     1 + floor((j + halfSecond - j19800101)*(86400/nUnits)))
     ans <- as.ti(1e10*nTif + period)
     names(ans) <- names(jul)
     return(ans)
@@ -810,9 +758,9 @@ tiToJul <- function(ti, must.handle=F){
       nUnits <- nTif %% 1e3
       if(nUnits == 0) nUnits <- 1
       j <- switch(hms - 1, ## 1 = hourly, 2 = minutely, 3 = secondly
-                  j19800101 + (nUnits*periods)/24,
-                  j19800101 + (nUnits*periods)/1440,
-                  j19800101 + (nUnits*periods)/86400)
+                  j19800101 + nUnits*periods/24,
+                  j19800101 + nUnits*periods/1440,
+                  j19800101 + nUnits*periods/86400)
       names(j) <- names(ti)
       return(as.jul(j))
     }
@@ -1020,7 +968,6 @@ secondly <- function(n = 0){
 ## Support functions
 isLeapYear    <- function(y) y %% 4 == 0 & (y %% 100 != 0 | y %% 400 == 0)
 is.ymd        <- function(x) all(between(x, 17990101, 21991231))
-is.time       <- function(x) all(between(x, 1799, 2200))
 julToWeekday  <- function(jul){
   ## Sun = 1, Sat = 7.  2415020 = Sunday, 12/31/1899
   ((unclass(jul) - 2415020) %% 7) + 1
