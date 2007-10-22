@@ -1,4 +1,4 @@
-AC_INIT([fame], 1.08)
+AC_INIT([fame], 1.09)
 dnl See if user specified fame directory
 hliDir=""
 if test $FAME ; then

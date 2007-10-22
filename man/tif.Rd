@@ -8,9 +8,11 @@
 \alias{tifName.default}
 \alias{tifName.ti}
 \alias{tifName.tis}
-\title{ Time Index Frequencies }
+\alias{period}
+\title{ Time Index Frequencies and Periods}
 \description{
-  Return the tif code of an object, or the name associated with a tif code.
+  Return the tif code of an object, the name associated with a tif code,
+  or the period number of a time index.
 }
 \usage{
 tif(x, \dots)
@@ -22,6 +24,7 @@ tifName(s)
 \method{tifName}{default}(s)
 \method{tifName}{ti}(s)
 \method{tifName}{tis}(s)
+period(z)
 }
 \arguments{
   \item{x}{
@@ -34,6 +37,9 @@ tifName(s)
   \item{\dots}{ignored}
   \item{s}{
 	a \code{ti} or \code{tis} object, or a tif code.
+  }
+  \item{z}{
+	a \code{ti} object.
   }
 }
 \details{
@@ -52,11 +58,16 @@ tifName(s)
 
   \code{tif} or \code{tifName} called with no arguments returns a vector
   of all tif codes with names.
+
+  \code{period} returns a vector like \code{z} giving the number of
+  periods elapsed since the first period defined for its argument's
+  frequency.  
 }
 \author{ Jeff Hallman }
 \seealso{ \code{\link{ti}}, \code{\link{frequency}}}
 \examples{
 tif()                 ## returns a vector of all tif codes
 tifName(today())      ## today() returns a ti
+period(today())
 }
 \keyword{ chron }

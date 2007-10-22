@@ -31,7 +31,8 @@ export(addLast, askForPassword, askForString, assignList, as.jul, as.ssDate,
        latestWeek, latestMonth, latestQuarter, latestHalf, latestQ4, latestYear,
        latestMonthDay, lintegrate, mergeSeries, minutely,
        month, naWindow, nextBusinessDay, observed, "observed<-",
-       pad.string, pgid, pid, portsInUse, POSIXct, POSIXlt, ppid, previousBusinessDay,
+       pad.string, period, pgid, pid, portsInUse, POSIXct, POSIXlt, ppid,
+       previousBusinessDay, 
        putfame, pwd, quarter, receiveFromServer, receiveSocketObject,
        RowMeans, RowSums, rows, runningLinux, runningWindows,
        secondly, sendExpression, sendSocketObject, sendToServer,
@@ -45,7 +46,7 @@ export(addLast, askForPassword, askForString, assignList, as.jul, as.ssDate,
 ## convertFreqCode, fameBasiss, fameClasses, fameObserveds, fameToTif,
 ## fameTypes, fameModeInt, freq2tif, getFamePath, hasExpired, initialTifList,
 ## is.time, is.ymd, jul2ti, jul2time, jul2ymd, jul2yp, julToTi,
-## julToWeekday, period, ti2jul, ti2time, ti2ymd, ti2yp,
+## julToWeekday, ti2jul, ti2time, ti2ymd, ti2yp,
 ## tifToFame, ymdToTi, ymd2ti, yp2jul, yp2ti, yp2time, yp2ymd
 
 S3method("[", jul)

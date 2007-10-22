@@ -1,6 +1,7 @@
 tisFromCsv <- function(csvFile,
                        dateCol = "date8",
                        dateFormat = "%Y%m%d",
+                       tif = NULL,
                        defaultTif = "business",
                        save = F,
                        envir = parent.frame(),
@@ -24,11 +25,9 @@ tisFromCsv <- function(csvFile,
   dateColIndex <- match(tolower(dateCol), tolower(zNames), nomatch = NA)
   if(is.na(dateColIndex))
     stop(paste(csvFile, "does not have a column named", dateCol, "\n"))
-  if(all(toupper(zNames) == zNames)) zNames <- tolower(zNames)
-  names(zdf) <- zNames
-
+  if(all(toupper(zNames) == zNames)) names(zdf) <- tolower(zNames)
+  
   zDateStrings <- as.character(zdf[[dateColIndex]])
-  zdf <- zdf[, -dateColIndex, drop = F]
   z <- as.matrix(zdf[,unlist(lapply(zdf, is.numeric)), drop = F])
   if(!is.null(naNumber)){
     naSpots <- (1:length(z))[abs(z - naNumber) <= tolerance]
@@ -36,47 +35,67 @@ tisFromCsv <- function(csvFile,
     z[naSpots] <- NA
   }
   cn <- colnames(z) 
-
-  if(length(grep("%d", dateFormat)) == 0){
-    dateFormat <- paste(dateFormat, "%d")
-    zDateStrings <- paste(zDateStrings, "1")
-  }
-  dtJul <- jul(zDateStrings, format = dateFormat)
   if(NCOL(z) == 0) stop("No non-NA values in file")
-  freq <- round(365.25/median(diff(dtJul)))
-  if(is.na(freq)) freq <- tif2freq(defaultTif)
-  ## get nearest ti for each dt
-  dtTime <- time(dtJul)
-  if(freq == 365 && all(between(dayOfWeek(dtJul), 2, 6)))
-    dtTi <- ti(dtTime, tif = "business")
-  else 
-    dtTi <- ti(dtTime, freq = freq)
-  if(median(abs(jul(dtTi) - dtJul)) > 0.5){ ## could be wrong ti
-    if(freq == 52){
-      newTif <- tif("wsunday") + dayOfWeek(max(dtJul)) - 1
-      dtTi <- ti(dtTime, tif = newTif)
+
+  if(tolower(dateFormat) == "excel")
+    dateTimes <- POSIXct(jul(as.ssDate(zdf[[dateColIndex]])))
+  else {
+    if(length(grep("%d", dateFormat)) == 0){
+      dateFormat <- paste(dateFormat, "%d")
+      zDateStrings <- paste(zDateStrings, "1")
     }
-    if(freq == 26){
-      newTif <- tif("bw1sunday") + dayOfPeriod(max(dtJul), "bw1sunday") - 1
-      if(tifName(newTif) == "bw1wednesday" && ("mra" %in% groups()))
-        newTif <- "reserves"
-      dtTi <- ti(dtTime, tif = newTif)
+    dateTimes <- as.POSIXct(strptime(zDateStrings, format = dateFormat))
+  }
+  if(!is.null(tif))
+    dtTi <- ti(dateTimes, tif = tif)
+  else {
+    diffSeconds <- median(diff(unclass(dateTimes)))
+    freq <- round((365.25 * 60*60*24)/diffSeconds)
+    if(is.na(freq)) freq <- tif2freq(defaultTif)
+
+    if(freq > 365){  ## maybe intraday
+      if((diffSeconds %% 3600) == 0){
+        tif <- hourly(diffSeconds / 3600)
+      } else if((diffSeconds %% 60) == 0){
+        tif <- minutely(diffSeconds / 60)
+      } else tif <- secondly(diffSeconds)
+    } else {
+      if(freq == 365){
+        if(all(between(dayOfWeek(dtJul), 2, 6)))
+          tif <- "business"
+        else tif <- "daily"
+      } else tif <- freq2tif(freq)
     }
-    if(freq == 6){
-      newTif <- tif("bmdecember") - (month(max(dtJul)) %% 2)
-      dtTi <- ti(dtTime, tif = newTif)
-    }
-    if(freq == 4){
-      newTif <- tif("qoctober") + ((2 + month(max(dtJul))) %% 4)
-      dtTi <- ti(dtTime, tif = newTif)
-    }
-    if(freq == 2){
-      newTif <- tif("sannjuly") + ((5 + month(max(dtJul))) %% 6)
-      dtTi <- ti(dtTime, tif = newTif)
-    }
-    if(freq == 1){
-      newTif <- tif("annjanuary") - 1 + month(max(dtJul))
-      dtTi <- ti(dtTime, tif = newTif)
+    dtTi <- ti(dateTimes, tif = tif)
+    dtJul <- floor(jul(dateTimes))
+    
+    if(median(abs(jul(dtTi) - dtJul)) > 0.5){ ## could be wrong ti
+      if(freq == 52){
+        newTif <- tif("wsunday") + dayOfWeek(max(dtJul)) - 1
+        dtTi <- ti(dtTime, tif = newTif)
+      }
+      if(freq == 26){
+        newTif <- tif("bw1sunday") + dayOfPeriod(max(dtJul), "bw1sunday") - 1
+        if(tifName(newTif) == "bw1wednesday" && ("mra" %in% groups()))
+          newTif <- "reserves"
+        dtTi <- ti(dtTime, tif = newTif)
+      }
+      if(freq == 6){
+        newTif <- tif("bmdecember") - (month(max(dtJul)) %% 2)
+        dtTi <- ti(dtTime, tif = newTif)
+      }
+      if(freq == 4){
+        newTif <- tif("qoctober") + ((2 + month(max(dtJul))) %% 4)
+        dtTi <- ti(dtTime, tif = newTif)
+      }
+      if(freq == 2){
+        newTif <- tif("sannjuly") + ((5 + month(max(dtJul))) %% 6)
+        dtTi <- ti(dtTime, tif = newTif)
+      }
+      if(freq == 1){
+        newTif <- tif("annjanuary") - 1 + month(max(dtJul))
+        dtTi <- ti(dtTime, tif = newTif)
+      }
     }
   }
   zStart <- dtTi[1]
@@ -85,10 +104,11 @@ tisFromCsv <- function(csvFile,
   zSeries[dtTi,] <- z
   class(zSeries) <- "tis"
   colnames(zSeries) <- colnames(z)
+  
   retList <- lapply(columns(zSeries), naWindow)
   if(save) assignList(retList, env = envir)
   gc()
-
+  
   if(save)
     invisible(retList)
   else

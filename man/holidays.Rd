@@ -16,14 +16,14 @@
 \usage{
 nextBusinessDay(x, holidays = NULL, goodFriday = F, board = F)
 previousBusinessDay(x, holidays = NULL, goodFriday = F, board = F)
-isHoliday(x, goodFriday = F, board = F)
+isHoliday(x, goodFriday = F, board = F, businessOnly = T)
 isGoodFriday(x)
 isEaster(x)
-holidays(years, goodFriday = F, board = F)
-federalHolidays(years, board = F)
+holidays(years, goodFriday = F, board = F, businessOnly = T)
+federalHolidays(years, board = F, businessOnly = T)
 goodFriday(years)
 easter(years)
-holidaysBetween(startTi, endTi, goodFriday = F, board = F)
+holidaysBetween(startTi, endTi, goodFriday = F, board = F, businessOnly = T)
 }
 \arguments{
   \item{x}{a \code{ti} time index, or something that can be turned into
@@ -35,6 +35,9 @@ holidaysBetween(startTi, endTi, goodFriday = F, board = F)
 	Default is \code{FALSE} because Good Friday is not a federal holiday.}
   \item{board}{if \code{TRUE}, the Friday preceding a Saturday NewYears,
 	Independence, Veterans or Christmas Day is considered a holiday.}
+  \item{businessOnly}{if \code{TRUE} (the default), ignore Saturday NewYears,
+	Independence, Veterans amd Christmas Day holidays.  Has no effect if
+	\code{board} is \code{TRUE}, since that moves Saturday holidays to Friday.}
   \item{years}{numeric vector of 4 digit years}
   \item{startTi}{a daily \code{ti} time index, or something that can be
   turned into one}

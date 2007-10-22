@@ -285,7 +285,7 @@ max.ssDate <- function(..., na.rm = F)
   structure(max(unlist(lapply(list(...), unclass)), na.rm = na.rm), class = "ssDate")
 
 print.ssDate <- function(x, ...){
-  print(unclass(x), ...)
+  print(ymd(x), ...)
   cat("class: ssDate\n")
 }
 
@@ -388,9 +388,9 @@ couldBeTi <- function(x, tif = NULL){
   }
 }
 
-period <- function(x){
-  if(is.ti(x) || couldBeTi(x))
-    stripClass(x, "ti") %% 1e10
+period <- function(z){
+  if(is.ti(z) || couldBeTi(z))
+    stripClass(z, "ti") %% 1e10
   else NULL
 }
 

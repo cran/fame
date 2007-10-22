@@ -4,7 +4,8 @@
 \description{Reads \code{tis} (Time Indexed Series) from a csv file,
   returning the series in a list, and optionally storing them in an environment.}
 \usage{
-tisFromCsv(csvFile, dateCol = "date8", dateFormat = "\%Y\%m\%d", defaultTif = "business",
+tisFromCsv(csvFile, dateCol = "date8", dateFormat = "\%Y\%m\%d",
+           tif = NULL, defaultTif = "business",
            save = F, envir = parent.frame(),
            naNumber = NULL, tolerance = sqrt(.Machine$double.eps), ...)
 }
@@ -14,8 +15,12 @@ tisFromCsv(csvFile, dateCol = "date8", dateFormat = "\%Y\%m\%d", defaultTif = "b
     required attributes of this file.}
   \item{dateCol}{name of the column holding dates.  This column must be
 	present in the file.} 
-  \item{dateFormat}{format of the dates in \code{dateCol}. See
-	\code{\link{strftime}} for date formats.}
+  \item{dateFormat}{format of the dates in \code{dateCol}. If
+  the \code{dateCol} cells contain Excel dates, use \code{dateFormat ==
+  "excel"}.  If they are strings, see \code{\link{strptime}} for date formats.}
+  \item{tif}{time index frequency of the data.  If this is \code{NULL}
+	(the default), the function tries to infer the frequency from the
+	dates in the \code{ymdCol} column.}
   \item{defaultTif}{If the frequency can't be inferred from the dates in
     the \code{ymdCol} column, this \code{tif} frequency will be used.
     This should be a rare occurrence.}

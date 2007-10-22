@@ -20,8 +20,8 @@ previousBusinessDay <- function(x, holidays = NULL, goodFriday = F, board = F){
   z
 }
 
-isHoliday <- function(x, goodFriday = F, board = F){
-  hols <- holidays(year(x), goodFriday = goodFriday, board = board)
+isHoliday <- function(x, goodFriday = F, board = F, businessOnly = T){
+  hols <- holidays(year(x), goodFriday, board, businessOnly)
   match(ymd(x), hols, nomatch = 0) > 0
 }
 
@@ -35,23 +35,40 @@ isEaster <- function(x){
   match(ymd(x), hols, nomatch = 0) > 0
 }
 
-holidays <- function(years, goodFriday = F, board = F){
-  hols <- federalHolidays(years, board = board)
+holidays <- function(years, goodFriday = F, board = F, businessOnly = T){
+  hols <- federalHolidays(years, board = board, businessOnly = businessOnly)
   if(goodFriday) hols <- sort(c(hols, goodFriday(years)))
   hols
 }
 
-federalHolidays <- function(years, board = F){
+federalHolidays <- function(years, board = F, businessOnly = T){
   ## returns yyyymmdd dates of federal holidays for given years.
   ##
-  ## Federal law defines 10 holidays.  4 set by date (NewYears,
-  ## Independence, Veterans, and Christmas) and 6 set by day of the week and
-  ## month (MLK, Presidents, Memorial, Labor, Columbus, and Thanksgiving).
+  ## Federal law defines 10 holidays.  4 are set by date:
+  ##
+  ##   NewYears       January 1
+  ##   Independence   July 4
+  ##   Veterans       November 11
+  ##   Christmas      December 25
+  ##
+  ## and the other 6 are set by day of the week and month:
+  ##
+  ##   MLK            third Monday of January
+  ##   Presidents     third Monday of February
+  ##   Memorial       last Monday of May
+  ##   Labor          first Monday of September
+  ##   Columbus       second Monday of October
+  ##   Thanksgiving   fourth Thursday of November
   ##
   ## If one of the four fixed-date holidays falls on a Sunday, the federal
   ## holiday is celebrated the next day (Monday).  If it falls on a Saturday,
   ## the preceding day (Friday) is a holiday for the Federal Reserve Board,
   ## but not for the Reserve Banks and the banking system as a whole.
+  ##
+  ## If businessOnly is TRUE, drop the Saturday holidays. Note that this has
+  ## no effect if board is TRUE, since that moves Saturday holidays to the
+  ## preceding Friday
+  ##
  
   ye4 <- years*10000
   holNames <- c("NewYears", "MLKing", "Presidents",
@@ -79,6 +96,10 @@ federalHolidays <- function(years, board = F){
     hols[weekday == 1] <- ymd(jul(hols[weekday == 1]) + 1)
   if(board && any(weekday == 7))
     hols[weekday == 7] <- ymd(jul(hols[weekday == 7]) - 1)
+  if(businessOnly){
+    ## drop Saturdays (no need to drop Sundays since there aren't any)
+    hols <- hols[weekday != 7]
+  }
   hols
 }
 
@@ -100,10 +121,11 @@ easter <- function(years){
   10000*years + 100*month + day
 }
 
-holidaysBetween <- function(startTi, endTi, goodFriday = F, board = F){
+holidaysBetween <- function(startTi, endTi, goodFriday = F,
+                            board = F,  businessOnly = T){
   startTi <- tiDaily(startTi)
   endTi   <- tiDaily(endTi)
   years <- year(startTi):year(endTi)
-  hols <- holidays(years, goodFriday, board)
+  hols <- holidays(years, goodFriday, board, businessOnly)
   hols[between(hols, ymd(startTi), ymd(endTi))]
 }
