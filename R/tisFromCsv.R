@@ -72,29 +72,29 @@ tisFromCsv <- function(csvFile,
     if(median(abs(jul(dtTi) - dtJul)) > 0.5){ ## could be wrong ti
       if(freq == 52){
         newTif <- tif("wsunday") + dayOfWeek(max(dtJul)) - 1
-        dtTi <- ti(dtTime, tif = newTif)
+        dtTi <- ti(dtJul, tif = newTif)
       }
       if(freq == 26){
         newTif <- tif("bw1sunday") + dayOfPeriod(max(dtJul), "bw1sunday") - 1
         if(tifName(newTif) == "bw1wednesday" && ("mra" %in% groups()))
           newTif <- "reserves"
-        dtTi <- ti(dtTime, tif = newTif)
+        dtTi <- ti(dtJul, tif = newTif)
       }
       if(freq == 6){
         newTif <- tif("bmdecember") - (month(max(dtJul)) %% 2)
-        dtTi <- ti(dtTime, tif = newTif)
+        dtTi <- ti(dtJul, tif = newTif)
       }
       if(freq == 4){
         newTif <- tif("qoctober") + ((2 + month(max(dtJul))) %% 4)
-        dtTi <- ti(dtTime, tif = newTif)
+        dtTi <- ti(dtJul, tif = newTif)
       }
       if(freq == 2){
         newTif <- tif("sannjuly") + ((5 + month(max(dtJul))) %% 6)
-        dtTi <- ti(dtTime, tif = newTif)
+        dtTi <- ti(dtJul, tif = newTif)
       }
       if(freq == 1){
         newTif <- tif("annjanuary") - 1 + month(max(dtJul))
-        dtTi <- ti(dtTime, tif = newTif)
+        dtTi <- ti(dtJul, tif = newTif)
       }
     }
   }

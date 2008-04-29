@@ -20,8 +20,9 @@ export(addLast, askForPassword, askForString, assignList, as.jul, as.ssDate,
        getfame, goodFriday, groups,
        growth.rate, "growth.rate<-", hexidecimal, hex2numeric, hms,
        holidays, holidaysBetween, hostName, hourly, ilspline,
-       interpNA, isEaster, isGoodFriday, isHoliday, isIntradayTif, is.jul,
-       isLeapYear, is.ssDate, is.ti, is.tis, jul,
+       interpNA, isEaster, isFameScalar, isGoodFriday, isHoliday,
+       isIntradayTif, isScalarOrTis, is.jul,
+       isLeapYear, is.scalar, is.ssDate, is.ti, is.tis, jul,
        killProcess, lastDayOf, lags, Lag, Lags, lastBusinessDayOf, lastBusinessDayOfMonth,
        latestSunday, latestMonday, latestTuesday, latestWednesday,
        latestThursday, latestFriday, latestSaturday,
@@ -43,11 +44,11 @@ export(addLast, askForPassword, askForString, assignList, as.jul, as.ssDate,
        tunnelSeries, user, validServerIsRunning, year, ymd)
 
 ## not exported
-## convertFreqCode, fameBasiss, fameClasses, fameObserveds, fameToTif,
-## fameTypes, fameModeInt, freq2tif, getFamePath, hasExpired, initialTifList,
-## is.time, is.ymd, jul2ti, jul2time, jul2ymd, jul2yp, julToTi,
-## julToWeekday, ti2jul, ti2time, ti2ymd, ti2yp,
-## tifToFame, ymdToTi, ymd2ti, yp2jul, yp2ti, yp2time, yp2ymd
+## convertFreqCode, fameBasiss, fameClasses, fameDate, fameDateString,
+## fameObserveds, fameToTif, fameTypes, fameModeInt, fameRange, fameYmd,
+## freq2tif, getFamePath, hasExpired, initialTifList, is.time, is.ymd, jul2ti,
+## jul2time, jul2ymd, jul2yp, julToTi, julToWeekday, ti2jul, ti2time, ti2ymd,
+## ti2yp, tifToFame, ymdToTi, ymd2ti, yp2jul, yp2ti, yp2time, yp2ymd 
 
 S3method("[", jul)
 S3method("[", ssDate)
@@ -171,6 +172,6 @@ S3method(ymd, ti)
 if(tools:::.OStype() == "unix"){
 export(alarmc, fameCommand, fameDbClose, fameDbOpen, fameDeleteObject,
        fameRunning, fameStart, fameStatusMessage, fameStop,
-       fameWhat, fameWriteSeries )
+       fameWhat, fameWriteSeries)
 }
 

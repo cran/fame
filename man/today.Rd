@@ -1,11 +1,11 @@
 \name{today}
 \alias{today}
 \title{Time Index for the Current Date }
-\description{}
+\description{Returns a daily \code{ti} for the current date.}
 \usage{
 today()
 }
-\value{ Returns a daily \code{ti} for the current date}
+\value{a \code{ti} object}
 \author{ Jeff Hallman }
 \seealso{ \code{\link{ti}}, \code{\link{Sys.Date}}}
 \keyword{ chron }

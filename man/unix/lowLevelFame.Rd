@@ -38,7 +38,9 @@
   process to be executed.  If \code{silent} is \code{TRUE}, it invisibly
   returns a status code that can be sent to \code{fameStatusMessage} to
   get an error message.  If \code{silent} is \code{FALSE}, the status
-  message is echoed to standard output.
+  message is echoed to standard output.  If \code{capture} is
+  \code{TRUE}, output from the FAME output channel is returned, with a
+  "status" attribute holding the FAME status code.
 
   \code{fameStatusMessage} looks up and returns the error message
   associated with its argument.
@@ -50,8 +52,7 @@
   \code{fameDbClose} closes the database associated with the
   given \code{dbKey}.
 
-  \code{fameDeleteObject} deletes the named object from the database
-  associated with the give \code{dbKey}.
+  \code{fameDeleteObject} deletes a named object from a database.
 
   \code{fameWriteSeries} writes the \code{tis} (Time Indexed Series)
   object \code{ser} as \code{fname} in the database associated with
@@ -78,23 +79,28 @@
 fameRunning()
 fameStart()
 fameStop()
-fameCommand(string, silent = F)
+fameCommand(string, silent = T, capture = F)
 fameStatusMessage(code)
 fameDbOpen(dbName, accessMode = "read")
 fameDbClose(dbKey)
-fameDeleteObject(dbKey, fname)
+fameDeleteObject(db, fname)
 fameWriteSeries(dbKey, fname, ser, update = F, checkBasisAndObserved = F)
 fameWhat(dbKey, fname, getDoc = F)
 }
 \arguments{
   \item{string}{a FAME command to be executed}
   \item{silent}{run the command quietly if \code{TRUE}}
+  \item{capture}{capture and return strings from the FAME output channel
+	if \code{TRUE}}
   \item{code}{an integer status code from FAME}
   \item{dbName}{name of or path to the database to open}
   \item{accessMode}{a string specifying the access model to open the
 	database in: one of "read", "create", "overwrite", "update", or
 	"shared".} 
   \item{dbKey}{integer returned by \code{dbOpen}}
+  \item{db}{can take \code{dbKey} or \code{dbName} form; that is, it can
+	be an integer returned by \code{dbOpen}, or it can be the name of a
+	database or path to a database.}
   \item{fname}{name of an object in a FAME database}
   \item{ser}{a \code{tis} time series}
   \item{update}{if \code{TRUE} update any existing series by the same
@@ -108,8 +114,11 @@ fameWhat(dbKey, fname, getDoc = F)
 
   \code{fameStart} and \code{fameStop} return nothing.
 
-  \code{fameCommand} invisibly returns a status code.
-
+  If \code{capture} is \code{FALSE}, \code{fameCommand} invisibly returns a status code.
+  If \code{capture} is \code{TRUE}, strings sent to the FAME output
+  channel are returned as a character vector, and the status code is
+  returned as the "status" attribute of that vector.
+  
   \code{fameStatusMessage} returns a message string.
 
   \code{fameDbOpen} returns an integer \code{dbKey}.

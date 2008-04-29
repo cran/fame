@@ -18,7 +18,7 @@
   \item{x}{a \code{tis} series.}
 }
 \details{
-  These are \code{tis} methods for generic functions}
+  These are \code{tis} methods for generic functions.
 }
 \value{
   A \code{tis} like \code{x}.  An \code{NA} value in \code{x} causes the

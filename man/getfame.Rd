@@ -5,8 +5,11 @@
 \alias{fameWildlist}
 \title{ Fame Interface }
 \description{
-  \code{getfame} and \code{putfame} read and write time indexed series
-  from and to Fame databases.
+  \code{getfame} and \code{putfame} read and write scalars (\code{ti,
+  numeric, character} or \code{logical} objects of length 1) and
+  numeric tis (Time Indexed Series) from and to Fame databases.
+  FAME case series and series with string or FAME "date" types can be
+  read by \code{getfame}, but not written with \code{putfame}. 
   
   \code{fameWhats} returns information about an object in a database,
   including its name, class, type, basis and observed attributes, as
@@ -36,8 +39,14 @@ fameWildlist(db, wildString = "?", nMax = 1000, charMode = T)
     character vector of Fame names of series and/or scalars to retrieve. 
   }
   \item{db}{
-    string giving the name of Fame database to read or write from. Full
-    path names should not be used for registered databases.
+    string giving the relative or full path to the Fame database to read
+    or write from. If the \code{fameLocalPath()} function is defined, it
+    will be called on this argument to obtain a path.  At the Federal
+    Reserve Board, \code{fameLocalPath()} knows how to look up the path
+    for 'registered' databases given only their names, e.g., "us",
+    "intl", and so on.  Full path names are thus unnecessary for
+    registered databases, and in fact are a bad idea, since the database
+    might get moved.
   }
   \item{save}{
     if \code{T} the retrieved series are individually saved in the
@@ -69,25 +78,33 @@ fameWildlist(db, wildString = "?", nMax = 1000, charMode = T)
     same names.
   }
   \item{serlist}{
-    the \code{tis} objects to be written to the database.  This can
-    either be a character vector giving the names of the series in the
-    environment specified by \code{envir}, or it can be a list
-    containing the series themselves. 
+    the objects to be written to the database.  This can be a character
+    vector giving the names of the objects in the environment specified
+    by \code{envir}, a list containing the objects, or an object itself.
+    Objects that can be written to the database include scalars (single
+    numbers, strings, and \code{ti} dates), and \code{tis} series. 
   }
   \item{access}{
-    string specifying the access mode to open the database in.
+    string specifying the access mode to open the database in.  Should
+    be one of \code{c("create", "overwrite", "read", "shared",
+    "update")}. \bold{Warning:} Opening an existing database in
+    "overwrite" mode wipes out the database.  You almost never want to
+    do this.
   }
   \item{update}{
     if \code{TRUE} (the default), existing series in the database will
     be updated.  If \code{FALSE}, existing series in the database with
     the same names will be replaced by the series in \code{serlist}.
+    Fame scalars (single strings, numbers or \code{ti} dates) always
+    overwrite their previous incarnations.
   }
   \item{checkBasisAndObserved}{
     if \code{TRUE} and \code{update} == \code{TRUE}, the basis and
     observed attributes of any existing series with the same name will
     be checked for consistency with the updating series from
     \code{serlist}.  If the basis or observed attributes differ, the
-    update will not happen.
+    update will not happen.  This argument has no effect with respect to
+    non-series objects.
   }
   \item{fname}{
     name of an object in a FAME database}
@@ -135,11 +152,12 @@ fameWildlist(db, wildString = "?", nMax = 1000, charMode = T)
   inconsistency is very common in MRA code. 
 }
 \value{
-  \code{getfame} returns a list of the retrieved series.  If \code{save}
+  \code{getfame} returns a list of the retrieved objects.  If \code{save}
   is \code{T}, the list is returned invisibly.  The names of the list
   are the R names described in the details.  Fame scalars are returned
-  as strings created by the Fame \code{type} command.  If \code{getDoc}
-  is \code{TRUE} (the default), the retrieved series will also have
+  as strings, \code{ti} dates, or numbers.  Case series are returned as
+  vectors of the appropriate type, without any case numbers.  If \code{getDoc}
+  is \code{TRUE} (the default), retrieved objects will also have
   attributes named \code{description} and \code{documentation}.
 
   \code{putfame} invisibly returns an empty string.
@@ -184,6 +202,9 @@ putfame(c(mser = "seriesA", wser = "seriesB"), db = "myfame.db")
 
 matrixSeries <- cbind(a = seriesA, b = seriesA + 3)
 putfame(matrixSeries, db = "myfame.db") ## stores as "a" and "b" in Fame
+
+## storing a scalar as "myscalar"
+putfame(c(myscalar = 42), db = "myfame.db") 
 
 fameWildlist("myfame.db")
 fameWhats("myfame.db", fname = "wser", getDoc = TRUE)

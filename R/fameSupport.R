@@ -31,8 +31,10 @@ convertFreqCode <- function(tif = NULL, fame = NULL){
   z
 }
 
-tifToFame <- function(tif)
-  convertFreqCode(tif = tif)
+tifToFame <- function(tif){
+  nTif <- tif(tif)
+  convertFreqCode(tif = nTif)
+}
 
 fameToTif <- function(fameFreq)
   convertFreqCode(fame = fameFreq)

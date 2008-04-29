@@ -158,7 +158,7 @@ jul.ti <- function(x, offset = 1, ...){
       z[] <- round((offset*j1 + (1 - offset)*j0)*86400)/86400
     }
   }
-  class(z) <- c(class(z), "jul")
+  class(z) <- c("jul", oldClass(z))
   return(z)
 }
 
@@ -555,7 +555,7 @@ POSIXct.ti <- function(x, offset = 1, ...){
     z[] <- floor(offset*(ct1 + 1) + (1 - offset)*ct0)
   }
   attr(z, "tzone") <- attr(ct1, "tzone")
-  class(z) <- c(class(z), "POSIXt", "POSIXct")
+  class(z) <- c("POSIXt", "POSIXct", oldClass(z))
   return(z)
 }
 
@@ -657,8 +657,12 @@ ymdToTi <- function(ymd, tif, must.handle=F){
   day    <- rawYmd %% 100
   
   nTif <- tif(tif)
-  if(nTif == 1010) ## tenday
-    return(1 + 36*(year-1900) + 3*(month-1) + (day>10) + (day>20))
+  if(nTif == 1010){ ## tenday
+    period <- 1 + 36*(year-1900) + 3*(month-1) + (day>10) + (day>20)
+    ans <- as.ti(1e10*nTif + period)
+    names(ans) <- names(ymd)
+    return(ans)
+  }
   if(between(nTif, 1026, 1050)){
     period <- switch(nTif - 1e3 - 25,
                      ## 26 = twicemonthly
@@ -777,17 +781,23 @@ tiToYmd <- function(ti, must.handle=F){
   nTif <- uti[1] %/% 1e10
   periods <- (uti %% 1e10) - 1
   mdays <- c(31,28,31,30,31,30,31,31,30,31,30,31)
-  if(nTif == 10){ ## tenday
+  if(nTif == 1010){ ## tenday
     y <- 1900 + periods %/% 36
-    m <- 1 + (periods %% 36)/3
-    dmat <- cbind(rep(10,12), rep(20,12), mdays)
-    d <- dmat[m, 1 + periods%%3]
+    m <- 1 + (periods %% 36) %/% 3
+    d <- mdays[m]
+    third <- periods %% 3
+    d[third == 0] <- 10
+    d[third == 1] <- 20
+    d <- d + (isLeapYear(y) & m == 2 & d > 27)
+    ymd <- y*10000 + m*100 + d
+    names(ymd) <- names(ti)
+    return(ymd)
   }
   else {
     if(between(nTif, 1026, 1050)){
       switch(nTif - 1e3 - 25, 
              ## 26 = twicemonthly
-             { y <- 1900 + periods %/% 2
+             { y <- 1900 + periods %/% 24
                m <- 1 + (periods %% 24) %/% 2
                half <- periods %% 2
                d <- 15*(half==0) + mdays[m]*(half==1)
@@ -901,7 +911,7 @@ tiToYmd <- function(ti, must.handle=F){
         return(jul2ymd(tiToJul(ti, must.handle=T)))
     }
   }
-  d <- d + (isLeapYear(y) & m == 2)
+  d <- d + (isLeapYear(y) & m == 2 & d > 27)
   ymd <- y*10000 + m*100 + d
   names(ymd) <- names(ti)
   return(ymd)
@@ -967,7 +977,7 @@ secondly <- function(n = 0){
 
 ## Support functions
 isLeapYear    <- function(y) y %% 4 == 0 & (y %% 100 != 0 | y %% 400 == 0)
-is.ymd        <- function(x) all(between(x, 17990101, 21991231))
+is.ymd        <- function(x) all(between(x, 15830101, 21991231))
 julToWeekday  <- function(jul){
   ## Sun = 1, Sat = 7.  2415020 = Sunday, 12/31/1899
   ((unclass(jul) - 2415020) %% 7) + 1
@@ -1104,6 +1114,29 @@ tifList <- function(){
       tl <- setDefaultFrequencies(setup = FALSE)
   }
   return(tl)
+}
+
+fameDateString <- function(xTi){
+  tif <- tif(xTi)
+  freq <- frequency(xTi)
+  ans <- character(length(xTi))
+  intraday <- isIntradayTif(tif)
+
+  if(any(intraday)){
+    intradayTif <- tif[intraday]
+    firstTif <- intradayTif[1]
+    if(length(intradayTif) > 1 && any(intradayTif != firstTif))
+      stop("intraday args must all have same frequency")
+    fmt <-paste("%d%b%Y:",
+                c("%H","%H:%M","%H:%M:%S")[(firstTif %/% 1000) - 1],
+                sep = "")
+    ans[intraday] <- format(xTi[intraday], fmt)
+  }
+  if(any(!intraday)){
+    z <- xTi[!intraday]
+    ans[!intraday] <- paste(year(z), cycle(z), sep = ":")
+  }
+  ans
 }
 
 setDefaultFrequencies <- function(weekly     = "wmonday",

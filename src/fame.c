@@ -20,6 +20,24 @@ void fameCloseDatabase(int *status, int *key){
   return;
 }
 
+void fameSetRange(int *status, int *freq, 
+				  int *fyear, int *fprd, int *lyear, int *lprd, 
+				  int *obs, int *range){
+  cfmsrng(status, *freq, fyear, fprd, lyear, lprd, range, obs);
+  return;
+}
+
+void fameDateFromYearMonthDay(int *status, int *freq, int *date,
+					 int *year, int *month, int*day){
+  cfmddat(status, *freq, date, *year, *month, *day);
+  return;
+}
+
+void yearMonthDayFromFameDate(int *status, int *freq, int *date,
+							  int *year, int *month, int *day){
+  cfmdatd(status, *freq, *date, year, month, day);
+}
+
 void fameWhat(int *status, int *dbkey, char **objnam, int *class,
 			 int *type, int *freq, int *basis, int *observ,
 			 int *fyear, int *fprd, int *lyear, int *lprd, 
@@ -52,42 +70,66 @@ void fameWhat(int *status, int *dbkey, char **objnam, int *class,
 }
 
 void fameReadIntegerSeries(int *status, int *dbKey, char **objnam,
-						   int *startYear, int *startPeriod, int *freq,
-						   int *obs, int *valary){
-  int mistt[3], range[3], endYear = -1, endPeriod = -1;
-  cfmsrng(status, *freq, startYear, startPeriod, &endYear, &endPeriod, range, obs);
+						   int *range, int *valary){
+  int mistt[3];
   cfmsbm(status, NA_INTEGER, NA_INTEGER, NA_INTEGER, mistt);
   cfmrrng(status, *dbKey, *objnam, range, valary, HTMIS, mistt);
   return;
 }
 
 void fameReadPrecisionSeries(int *status, int *dbKey, char **objnam,
-							 int *startYear, int *startPeriod, int *freq,
-							 int *obs, double *valary){
-  int range[3], endYear = -1, endPeriod = -1;
+							  int *range, double *valary){
   double mistt[3];
-  cfmsrng(status, *freq, startYear, startPeriod, &endYear, &endPeriod, range, obs);
-  cfmspm(status, NA_REAL, NA_REAL, NA_REAL, mistt);
+  cfmspm(status, R_NaN, NA_REAL, NA_REAL, mistt);
   cfmrrng(status, *dbKey, *objnam, range, valary, HTMIS, mistt);
   return;
 }
 
 void fameReadNumericSeries(int *status, int *dbKey, char **objnam,
-						   int *startYear, int *startPeriod, int *freq,
-						   int *obs, double *valary){
+						   int *range, double *valary){
   /* some extra work here to return array of doubles, rather than floats */
-  int range[3], endYear = -1, endPeriod = -1, i;
+  int i, obs;
   float mistt[3], *farray, fval;
-  cfmsrng(status, *freq, startYear, startPeriod, &endYear, &endPeriod, range, obs);
-  cfmsnm(status, FNUMNA, FNUMNA, FNUMNA, mistt);
-  farray = (float *) calloc(*obs, sizeof(float));
+  obs = range[2] - range[1] + 1;
+  cfmsnm(status, FNUMNC, FNUMNA, FNUMNA, mistt);
+  farray = (float *) calloc(obs, sizeof(float));
   cfmrrng(status, *dbKey, *objnam, range, farray, HTMIS, mistt);
-  for(i = 0; i < *obs; ++i){
+  for(i = 0; i < obs; ++i){
 	fval = farray[i];
 	if(fval == FNUMNA) valary[i] = NA_REAL;
-	else               valary[i] = fval;
+    else {
+	  if(fval == FNUMNC) valary[i] = R_NaN;
+	  else               valary[i] = fval;
+	}
   }
   free(farray);
+  return;
+}
+
+void fameGetStringLengths(int *status, int *dbKey, char **objnam,
+						  int *range, int *lenary){
+  cfmlsts(status, *dbKey, *objnam, range, lenary);
+  return;
+}
+
+void fameReadStringSeries(int *status, int *dbKey, char **objnam,
+						  int *range, char **strary, int *strlength){
+  int obs, inlen, *misary, i;
+  int *outlen = 0; /* a NULL ptr */
+  char naString[] = "NA";
+  if(*strlength < 3){ 
+	/* need at least 3 chars to hold null-terminated naString */
+	*status = HBLEN;
+	return;
+  }
+  obs = range[2] - range[1] + 1;
+  inlen = 1 - *strlength;
+  misary = (int *) calloc(obs, sizeof(int));
+  cfmgtsts(status, *dbKey, *objnam, range, strary, misary, &inlen, outlen);
+  for(i = 0; i < obs; ++i){
+	if(misary[i] != HNMVAL) strcpy(strary[i], naString);
+  }
+  free(misary);
   return;
 }
 
@@ -211,11 +253,14 @@ void fameWriteRange(int *status, int *dbKey, char **objnam,
   if(*status) return;
   switch(*type){
   case HBOOLN:
-    /* translate R NA's to Fame ND's */
+    /* translate R NA's to Fame NA's */
 	idata = (int *) malloc(*len * sizeof(int));
 	for(i = 0; i < *len; ++i){
-	  if(ISNA(data[i]) || ISNAN(data[i])) idata[i] = FBOOND;
-	  else                                idata[i] = (data[i] != 0);
+	  if(ISNA(data[i])) idata[i] = FBOONA;
+	  else {
+		if(ISNAN(data[i])) idata[i] = FBOONC;
+		else idata[i] = (data[i] != 0);
+	  }
 	}
 	cfmwrng(status, *dbKey, *objnam, range, idata, HNTMIS, imistt);
 	free(idata);
@@ -223,15 +268,19 @@ void fameWriteRange(int *status, int *dbKey, char **objnam,
   case HNUMRC:
 	fdata = (float *) malloc(*len * sizeof(float));
 	for(i = 0; i < *len; ++i){
-	  if(ISNA(data[i]) || ISNAN(data[i])) fdata[i] = FNUMND;
-	  else                                fdata[i] = data[i];
+	  if(ISNA(data[i])) fdata[i] = FNUMNA;
+	  else {
+		if(!R_FINITE(data[i])) fdata[i] = FNUMNC;
+		else fdata[i] = data[i];
+	  }
 	}
 	cfmwrng(status, *dbKey, *objnam, range, fdata, HNTMIS, fmistt);
 	free(fdata);
     break;
   case HPRECN:
 	for(i = 0; i < *len; ++i){
-	  if(ISNA(data[i]) || ISNAN(data[i])) data[i] = FPRCND;
+	  if(ISNA(data[i]))           data[i] = FPRCNA;
+	  else if(!R_FINITE(data[i])) data[i] = FPRCNC;
 	}
 	cfmwrng(status, *dbKey, *objnam, range, data, HNTMIS, dmistt);
     break;

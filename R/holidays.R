@@ -105,7 +105,9 @@ federalHolidays <- function(years, board = F, businessOnly = T){
 
 goodFriday <- function(years){
   ## yyyymmdd dates of Good Friday for given years
-  ymd(jul(easter(years)) - 2)
+  z <- ymd(jul(easter(years)) - 2)
+  names(z) <- rep("GoodFriday", length(z))
+  z
 }
 
 easter <- function(years){

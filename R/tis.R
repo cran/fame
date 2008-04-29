@@ -20,8 +20,10 @@ tis <- function(data, start = 1, tif = NULL, frequency = NULL,
       n <- endTi + 1 - startTi
     }
   }
-  
+  if(is.data.frame(data))
+    data <- as.matrix(data)
   x <- unclass(data)
+  
   if(NROW(x) != n){
     if(is.matrix(x)) x <- apply(x, 2, rep, length.out = n)
     else x <- rep(x, length.out = n)
@@ -53,6 +55,8 @@ end.tis <- function(x, ...){
 stripTis <- function(x){
   z <- stripClass(x, "tis")
   attr(z, "start") <- NULL
+  attr(z, "observed") <- NULL
+  attr(z, "basis") <- NULL
   z
 }
 
@@ -483,7 +487,7 @@ mergeSeries <- function(x, y, differences=F){
       if(zStart == yStart) firstval <- y[1,]
       else firstval <- x[1,]
       za <- rbind(firstval, unclass(mergeSeries(diff(x), diff(y)))) 
-      for(i in 1:cols) z[,i] <- cumsum(za[,i])
+      for(i in 1:xCols) z[,i] <- cumsum(za[,i])
     }
     else{
       for(i in 1:xCols){
@@ -580,7 +584,7 @@ mergeSeries <- function(x, y, differences=F){
     else x[i] <- value
   }
   start(x) <- xStart
-  class(x) <- c("tis", class(x))
+  class(x) <- c("tis", oldClass(x))
   x
 }
 

@@ -27,9 +27,20 @@ fameStop <- function(){
   else warning("No fame process to stop")
 }
 
-fameCommand <- function(string, silent = F){
-  boink <- .C("fameCommand", status = integer(1), command = string,
-              errorMsg = character(256), PACKAGE = "fame")
+fameCommand <- function(string, silent = T, capture = F){
+  if(capture){
+    tfile <- paste(tempfile(), ".txt", sep = "")
+    on.exit(file.remove(tfile), add = T)
+    fameCommand(paste('output <access overwrite> "',
+                      tfile, '"', sep = ""), capture = F)
+    status <- fameCommand(string, silent = silent, capture = F)
+    fameCommand('output terminal', silent = T, capture = F)
+    strings <- readLines(tfile)
+    attr(strings, "status") <- status
+    return(strings)
+  }
+  capture.output(boink <- .C("fameCommand", status = integer(1), command = string,
+                             errorMsg = character(256), PACKAGE = "fame"))
   if(!silent){
     if(boink$status && string != "exit")
       cat(paste("\nERROR: fameCommand(\"", string, "\") failed\n", sep = ""))
@@ -93,7 +104,20 @@ fameDbClose <- function(dbKey){
     cat(fameStatusMessage(status), "\n")
 }
 
-fameDeleteObject <- function(dbKey, fname){
+fameDeleteObject <- function(db, fname){
+  if(length(db) == 1 && is.numeric(db)){
+    ## db is presumably the key to an already-open database
+    dbKey <- db
+  }
+  else {
+    dbPath <- getFamePath(db)
+    if(is.null(dbPath)) stop(paste("cannot read", db))
+    ## make sure a Fame server session is running
+    if(!fameRunning()) fameStart()
+    ## open database
+    dbKey <- as.integer(fameDbOpen(dbPath, accessMode = "shared"))
+    on.exit(fameDbClose(dbKey))
+  }
   .C("fameDeleteObject",
      status = integer(1),
      dbKey = as.integer(dbKey),
@@ -115,6 +139,15 @@ getFamePath <- function(dbString){
   else NULL
 }
 
+isFameScalar <- function(x){
+  !(is.tis(x) || is.ts(x)) && is.atomic(x) && length(x) == 1
+}
+
+isScalarOrTis <- function(x){
+  is.tis(x) || isFameScalar(x)
+}
+
+
 getfame <- function(sernames, db, save = F, envir = parent.frame(),
                     start = NULL, end = NULL, getDoc = T){
   ## If save = T, the series found are saved in envir using rnames
@@ -130,7 +163,6 @@ getfame <- function(sernames, db, save = F, envir = parent.frame(),
   dbKey <- fameDbOpen(dbPath)
   on.exit(fameDbClose(dbKey))
   
-  ## sernames <- tolower(sernames)
   n <- length(sernames)
   retList <- attList <- vector(n, mode = "list")
   
@@ -153,6 +185,9 @@ getfame <- function(sernames, db, save = F, envir = parent.frame(),
     fameCommand(paste('open <access read> "', dbPath, '" as ', dbName, sep = ''),
                 silent = T)
     on.exit(fameCommand(paste('close', dbName), silent = T), add = T)
+    fameCommand('image date value "<year><mz><dz>:<hhz>:<mmz>:<ssz>"')
+    fameCommand('image boolean auto')
+    fameCommand('decimal auto')
   }
   
   for(i in 1:n){
@@ -162,12 +197,26 @@ getfame <- function(sernames, db, save = F, envir = parent.frame(),
 
     if(atts$status == 0){
       if(atts$class == fameClasses["scalar"]){
-        tfile <- paste(tempfile(), ".txt", sep = "")
-        on.exit(file.remove(tfile), add = T)
-        fameCommand(paste('output <access overwrite> "', tfile, '"', sep = ""))
-        fameCommand(paste('type ', sername))
-        fameCommand('output terminal')
-        retItem <- readLines(tfile)
+        retItem <- fameCommand(paste("type", sername), capture = T)
+        if(attr(retItem, "status") != 0){
+          cat("Problem reading", sername, "\n")
+          retItem <- list()
+          next
+        }
+        else retItem <- as.vector(retItem)
+        isTi <- between(atts$type, 8, 228)
+        if(isTi || atts$type == fameTypes["date"]){
+          retItem <- strptime(retItem, "%Y%m%d:%H:%M:%S")
+          if(isTi)
+            retItem <- ti(retItem, tif = fameToTif(atts$type))
+        }
+        if(atts$type %in% fameTypes[c("boolean", "numeric", "precision")])
+          retItem <- eval(parse(text = retItem))
+
+        if(getDoc){
+          description(retItem)   <- atts$des
+          documentation(retItem) <- atts$doc
+        }
       }
       else {
         if(atts$class == fameClasses["formula"]){
@@ -182,36 +231,47 @@ getfame <- function(sernames, db, save = F, envir = parent.frame(),
                     fameStatusMessage(atts$status)), "\n")
         }
         else {
-          tif <- fameToTif(atts$freq)
-          if(tif == 1015){
-            ## use reserves frequency rather than bw1wednesday if possible
-            if((100*(atts$fyear) + atts$fprd) > 198403)
-              tif <- 1011
+          if(atts$freq == 232){
+            ## a CASE series, we'll read the whole thing
+            if(between(atts$type, 8, 228)){ ## a CASE series of FAME dates
+              fameFreq <- atts$type
+              atts$type <- 6
+            }
+            range <- atts$range
+            obs <- range[3] - range[2] + 1
           }
-          ## set date ranges
-          dbStart <- ti(c(atts$fyear, atts$fprd), tif)
-          dbEnd   <- dbStart + atts$obs - 1
-          if(is.null(start)) desiredStart <- dbStart
-          else               desiredStart <- ti(start, tif = tif)
-          if(is.null(end))   desiredEnd   <- dbEnd
-          else               desiredEnd   <- ti(end, tif = tif)
-          actualStart <- max(dbStart, desiredStart)
-          actualEnd   <- min(dbEnd,   desiredEnd)
-          startYear   <- as.integer(year(actualStart))
-          startPeriod <- as.integer(cycle(actualStart))
-          obs         <- as.integer(actualEnd - actualStart + 1)
-          if(obs < 1) next
-        
+          else {
+            tif <- fameToTif(atts$freq)
+            if(tif == 1015){
+              ## use reserves frequency rather than bw1wednesday if possible
+              if((100*(atts$fyear) + atts$fprd) > 198403)
+                tif <- 1011
+            }
+            ## set date ranges
+            dbStart <- ti(c(atts$fyear, atts$fprd), tif)
+            dbEnd   <- dbStart + atts$obs - 1
+            if(is.null(start)) desiredStart <- dbStart
+            else               desiredStart <- ti(start, tif = tif)
+            if(is.null(end))   desiredEnd   <- dbEnd
+            else               desiredEnd   <- ti(end, tif = tif)
+            actualStart <- max(dbStart, desiredStart)
+            actualEnd   <- min(dbEnd,   desiredEnd)
+            startYear   <- as.integer(year(actualStart))
+            startPeriod <- as.integer(cycle(actualStart))
+            obs         <- as.integer(actualEnd - actualStart + 1)
+            if(obs < 1) next
+            range <- fameRange(freq = atts$freq,
+                               startYear = startYear, startPeriod = startPeriod,
+                               obs = obs)$range
+          }
+          
           z <- switch(as.character(atts$type),
                       "1" = {
                         .C("fameReadNumericSeries",
                            status      = integer(1),
                            dbKey       = atts$dbKey,
                            name        = atts$name,
-                           startYear   = startYear,
-                           startPeriod = startPeriod,
-                           freq        = atts$freq,
-                           obs         = obs,
+                           range       = as.integer(range),
                            data        = double(obs),
                            PACKAGE = "fame")
                       },
@@ -220,10 +280,7 @@ getfame <- function(sernames, db, save = F, envir = parent.frame(),
                            status      = integer(1),
                            dbKey       = atts$dbKey,
                            name        = atts$name,
-                           startYear   = startYear,
-                           startPeriod = startPeriod,
-                           freq        = atts$freq,
-                           obs         = obs,
+                           range       = as.integer(range),
                            data        = double(obs),
                            PACKAGE = "fame")
                       },
@@ -232,24 +289,62 @@ getfame <- function(sernames, db, save = F, envir = parent.frame(),
                            status      = integer(1),
                            dbKey       = atts$dbKey,
                            name        = atts$name,
-                           startYear   = startYear,
-                           startPeriod = startPeriod,
-                           freq        = atts$freq,
-                           obs         = obs,
+                           range       = as.integer(range),
                            data        = logical(obs),
                            PACKAGE = "fame")
+                      },
+                      "6" = {  ## fame dates
+                        .C("fameReadIntegerSeries",
+                           status      = integer(1),
+                           dbKey       = atts$dbKey,
+                           name        = atts$name,
+                           range       = as.integer(range),
+                           data        = integer(obs),
+                           PACKAGE = "fame")
+                      },
+                      "4" = { ## strings
+                        zz <- .C("fameGetStringLengths",
+                                 status      = integer(1),
+                                 dbKey       = atts$dbKey,
+                                 name        = atts$name,
+                                 range       = as.integer(range),
+                                 lengths     = integer(obs),
+                                 PACKAGE = "fame")
+                        if(zz$status != 0){
+                          cat(fameStatusMessage(z$status))
+                          break
+                        }
+                        maxlen <- max(3, max(zz$lengths) + 1)
+                        zzz <- .C("fameReadStringSeries",
+                                  status      = integer(1),
+                                  dbKey       = atts$dbKey,
+                                  name        = atts$name,
+                                  range       = as.integer(range),
+                                  data        = rep(blanks(maxlen), obs),
+                                  strlength   = as.integer(maxlen),
+                                  PACKAGE = "fame")
+                        zzz$data <- stripBlanks(zzz$data)
+                        zzz
                       },
                       { ## default -- crap out
                         list(status = 16)
                       })
           if(z$status == 0){
-            retItem <- tis(z$data, start = actualStart)
-            if(atts$basis > 0) 
-              attr(retItem, "basis") <- c("daily", "business")[atts$basis]
-            if(atts$observ > 0) 
-              attr(retItem, "observed") <-
-                c("beginnin", "ending", "averaged", "summed", "annualized",
-                  "formula", "high", "low")[atts$observ]
+            if(atts$freq == 232){
+              if(atts$type == 6)
+                retItem <- fameDateToTi(z$data, fameFreq)
+              else
+                retItem <- z$data
+            }
+            else {
+              retItem <- tis(z$data, start = actualStart)
+              if(atts$basis > 0) 
+                attr(retItem, "basis") <- c("daily", "business")[atts$basis]
+              if(atts$observ > 0) 
+                attr(retItem, "observed") <-
+                  c("beginnin", "ending", "averaged", "summed", "annualized",
+                    "formula", "high", "low")[atts$observ]
+            }
             if(getDoc){
               description(retItem)    <- atts$des
               documentation(retItem) <- atts$doc
@@ -294,9 +389,6 @@ putfame <- function(serlist, db,
   ## make sure a Fame server session is running
   if(!fameRunning()) fameStart()
 
-  ## open database
-  dbKey <- fameDbOpen(dbPath, accessMode = access)
-  on.exit(fameDbClose(dbKey))
   ## create z, a list of univariate tis series to be written to Fame
   if(is.character(serlist)){
     zz <- vector("list", length(serlist))
@@ -307,8 +399,8 @@ putfame <- function(serlist, db,
       if(exists(rname, envir = envir))
         obj <- get(rname, envir = envir)
       else stop(paste(rname, "not found"))
-      if(!is.tis(obj))
-        stop(paste(rname, "is not a tis series"))
+      if(!isScalarOrTis(obj))
+        stop(paste(rname, "is not a fame scalar or a tis series"))
       zz[[i]] <- obj
     }
   }
@@ -320,8 +412,8 @@ putfame <- function(serlist, db,
       names(zz) <- deparse(substitute(serlist))
     }
   }
-  if(!all(sapply(zz, is.tis)))
-    stop("non-tis argument")
+  if(!all(sapply(zz, isScalarOrTis)))
+    stop("non-scalar, non-tis argument")
 
   nser <- length(zz)
   if(is.null(fameNames <- names(zz)))
@@ -350,16 +442,97 @@ putfame <- function(serlist, db,
       z[[i.z]] <- ser
     }
     if(any(nchar(znames[i.z]) == 0))
-      stop("unnamed series")
+      stop("unnamed scalar or series")
   }
-  ## z is finally ready now
-  for(i in 1:length(z))
-    fameWriteSeries(dbKey, znames[i], z[[i]], update = update,
-                    checkBasisAndObserved = checkBasisAndObserved)
+
+  ## find scalar and series elements in z 
+  scalar <- sapply(z, isFameScalar)
+  scalarIndex <- (1:length(z))[scalar]
+  seriesIndex <- (1:length(z))[!scalar]
+  
+  dbKey <- fameDbOpen(dbPath, accessMode = access)
+  ## We may have to open and close the database multiple times (don't ask why,
+  ## just know that FAME sucks).  To prevent reopening from doing something
+  ## horrible, like wiping out the database (which reopening in "overwrite"
+  ## would do) or throwing an error (which reopening in "create" would do),
+  ## we open the database once in the desired access mode, then immediately
+  ## close it and change the access mode to "shared" for future openings.
+  if(access %in% c("create", "overwrite")) access <- "shared"
+  fameDbClose(dbKey)
+  
+  if(any(scalar)){ ## write the scalars out first
+    fameCommand(paste('open <access ', access, '> "', dbPath,
+                      '" as targetdb', sep = ''), silent = T)
+    for(i in scalarIndex)
+      fameWriteScalar(dbPath, znames[i], z[[i]], update = update)
+    fameCommand('close targetdb')
+    
+  }
+  if(any(!scalar)){ ## now write out the tis series
+    dbKey <- fameDbOpen(dbPath, accessMode = access)
+    on.exit(fameDbClose(dbKey))
+    for(i in seriesIndex){
+      fameWriteSeries(dbKey, znames[i], z[[i]], update = update,
+                      checkBasisAndObserved = checkBasisAndObserved)
+    }
+  }
+}
+
+fameWriteScalar <- function(dbPath, fname, scalar, update = T){
+  ## if update is FALSE or there is no existing object named 'fname', put
+  ## overwrite on to force creation of a new object along with any documentation
+  ## and description attributes.
+  ## Note that the database being written to is 'targetdb'.  This should be
+  ## the same database as specified by 'dbPath', but 'dbPath' is used only
+  ## when searching, as the CHLI only allows searches on databases via the
+  ## dbkey, and it provides no way of getting the dbkey for a database opened
+  ## via the cfmfame() function employed by fameCommand()
+  if(is.ti(scalar))              type <- "date"
+  else if(is.numeric(scalar))    type <- "precision"
+  else if(is.logical(scalar))    type <- "boolean"
+  else if(is.character(scalar))  type <- "string"
+  else stop("scalar must be ti, numeric, logical or character type")
+  
+  wl <- fameWildlist(db = dbPath, wildString = fname, nMax = 2)
+  nFound <- length(wl[[1]])
+  if(nFound > 1) stop("found multiple objects with same name")
+  
+  if(update && nFound > 0){
+    dbType <- tolower(wl$type[1])
+    if(dbType != type) stop("dbType must match scalar type when update = T")
+    cmd <- paste("update !targetdb'", fname, " =", sep = "")
+  }
+  else {
+    overwriteState <- fameCommand("type @overwrite", capture = T)
+    fameCommand("overwrite TRUE")
+    on.exit(fameCommand(paste("overwrite", overwriteState)), add = T)
+    cmd <- paste("scalar !targetdb'", fname, ":", type, " =", sep = "") 
+  }
+
+  switch(type,
+         date = {
+           fameCommand(paste("frequency", tifToFameName(scalar)))
+           fameCommand(paste(cmd, fameDateString(scalar)))
+         },
+         precision = {
+           fameCommand(paste(cmd, format(scalar, digits =14)))
+         },
+         boolean = {
+           fameCommand(paste(cmd, scalar))
+         },
+         string = {
+           fameCommand(paste(cmd, " \"", scalar, "\"", sep = ""))
+         })
+  if(nFound == 0 || update == F){
+    if(!is.null(desc <- description(scalar)))
+      fameCommand(paste("description(", fname, ") = \"", desc, "\"", sep = ""))
+    if(!is.null(doc <- documentation(scalar)))
+      fameCommand(paste("documentation(", fname, ") = \"", doc, "\"", sep = ""))
+  }
 }
 
 fameWriteSeries <- function(dbKey, fname, ser, update = F,
-                            checkBasisAndObserved = F){
+                              checkBasisAndObserved = F){
   ## Write the tis (TimeIndexedSeries) ser as fname in the database given by dbKey.
   ## If an object named fname already exists in the database and update == T,
   ## the frequency, observed, and basis attributes of ser are checked for
@@ -398,7 +571,6 @@ fameWriteSeries <- function(dbKey, fname, ser, update = F,
   ## Note that doc and desc attributes are ignored when updating existing series
   if(is.null(desc <- description(ser)  )) desc <- ""
   if(is.null(doc  <- documentation(ser))) doc  <- ""
-
   z <- .C("fameWriteRange",
           status      = integer(1),
           dbKey       = as.integer(dbKey),
@@ -422,6 +594,75 @@ fameWriteSeries <- function(dbKey, fname, ser, update = F,
   if(status != 0) stop()
   invisible(status)
 }
+
+fameDateToTi <- function(fameDates, freq = tifToFame("daily")){
+  if(!(is.numeric(freq) && freq < 999))
+    freq <- tifToFame(freq)
+  firstYmd <- fameYmd(fameDates[1], freq)
+  firstTi <- ti(firstYmd, tif = fameToTif(freq))
+  firstTi + (fameDates - fameDates[1])
+}
+
+fameYmd <- function(fameDate, fameFreq = tifToFame("daily")){
+  ## make sure a Fame server session is running
+  if(!fameRunning()) fameStart()
+  z <- .C("yearMonthDayFromFameDate",
+          status   = integer(1),
+          freq     = as.integer(fameFreq),
+          fameDate = as.integer(fameDate),
+          year     = integer(1),
+          month    = integer(1),
+          day      = integer(1),
+          PACKAGE  = "fame")
+  if(z$status != 0){
+    cat(fameStatusMessage(z$status))
+    stop()
+  }
+  10000*z$year + 100*z$month + z$day
+}
+
+fameDate <- function(inDate = today(), tif = "daily"){
+  if(missing(tif) && is.ti(inDate)) tif <- tif(inDate)
+  tiDate <- ti(inDate, tif = tif)
+  ## make sure a Fame server session is running
+  if(!fameRunning()) fameStart()
+  z <- .C("fameDateFromYearMonthDay",
+          status   = integer(1),
+          freq     = as.integer(tifToFame(tif)),
+          fameDate = integer(1),
+          year     = as.integer(year(tiDate)),
+          month    = as.integer(month(tiDate)),
+          day      = as.integer(day(tiDate)),
+          PACKAGE  = "fame")
+  if(z$status != 0){
+    cat(fameStatusMessage(z$status))
+    stop()
+  }
+  z$fameDate
+}
+
+fameRange <- function(freq, startYear = -1, startPeriod = -1,
+                      endYear = -1, endPeriod = -1,
+                      obs = -1){
+  ## make sure a Fame server session is running
+  if(!fameRunning()) fameStart()
+  z <- .C("fameSetRange",
+          status = integer(1),
+          freq  = as.integer(freq),
+          fyear = as.integer(startYear),
+          fprd  = as.integer(startPeriod),
+          lyear = as.integer(endYear),
+          lprd  = as.integer(endPeriod),
+          obs   = as.integer(obs),
+          range = integer(3),
+          PACKAGE = "fame")
+  if(z$status != 0){
+    cat(fameStatusMessage(z$status))
+    stop()
+  }
+  z
+}
+
 
 fameWhat <- function(dbKey, fname, getDoc = F){
   getDoc <- as.integer(as.logical(getDoc))
@@ -473,10 +714,14 @@ fameWhats <- function(db, fname, getDoc = T){
     warning(fameStatusMessage(z$status))
     return(NULL)
   }
-  
+
   zz <- list(name     = tolower(z$name),
              class    = names(fameClasses[  match(z$class,  fameClasses)]),
-             type     = names(fameTypes[    match(z$type,   fameTypes)]))
+             type     = names(fameTypes[match(z$type, fameTypes)]))
+  if(!is.na(cTif <- tifName(fameToTif(z$type)))){
+    zz$tif <- cTif
+  }
+  
   if(zz$class == "series"){
     zz <- c(zz, 
             basis    = names(fameBasiss[   match(z$basis,  fameBasiss)]),
@@ -565,8 +810,14 @@ fameWildlist <- function(db, wildString = "?", nMax = 1000, charMode = T){
   
   if(nFound > 0 && charMode){
     z$class <- names(fameClasses)[z$class]
-    z$type  <- names(fameTypes)[z$type + 1]
+    types <- z$type
+    z$type <- names(fameTypes)[types + 1]
+    isDateType <- between(types, 8, 228)
+    z$type[isDateType] <- "date"
+    z$freq[isDateType] <- types[isDateType]
+    isCaseSeries <- z$freq == 232
     z$freq  <- tifName(fameToTif(z$freq))
+    z$freq[isCaseSeries] <- "case"
   }
   z
 }
