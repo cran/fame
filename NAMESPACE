@@ -20,8 +20,8 @@ export(addLast, askForPassword, askForString, assignList, as.jul, as.ssDate,
        getfame, goodFriday, groups,
        growth.rate, "growth.rate<-", hexidecimal, hex2numeric, hms,
        holidays, holidaysBetween, hostName, hourly, ilspline,
-       interpNA, isEaster, isFameScalar, isGoodFriday, isHoliday,
-       isIntradayTif, isScalarOrTis, is.jul,
+       interpNA, isEaster, isGoodFriday, isHoliday,
+       isIntradayTif, is.jul,
        isLeapYear, is.scalar, is.ssDate, is.ti, is.tis, jul,
        killProcess, lastDayOf, lags, Lag, Lags, lastBusinessDayOf, lastBusinessDayOfMonth,
        latestSunday, latestMonday, latestTuesday, latestWednesday,
@@ -172,6 +172,6 @@ S3method(ymd, ti)
 if(tools:::.OStype() == "unix"){
 export(alarmc, fameCommand, fameDbClose, fameDbOpen, fameDeleteObject,
        fameRunning, fameStart, fameStatusMessage, fameStop,
-       fameWhat, fameWriteSeries)
+       fameWhat, fameWriteSeries, isFameScalar, isScalarOrTis)
 }
 
