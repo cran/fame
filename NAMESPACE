@@ -2,7 +2,7 @@ import(stats)
 import(utils)
 
 useDynLib(fame)
-export(addLast, askForPassword, askForString, assignList, as.jul, as.ssDate,
+export(addLast, alarmc, askForPassword, askForString, assignList, as.jul, as.ssDate,
        as.ti, as.tis, availablePort, badClassStop, basis, "basis<-", between,
        blanks, columns, commandLineString, convert, couldBeTi, csv, 
        currentSunday, currentMonday, currentTuesday, currentWednesday,
@@ -20,9 +20,9 @@ export(addLast, askForPassword, askForString, assignList, as.jul, as.ssDate,
        getfame, goodFriday, groups,
        growth.rate, "growth.rate<-", hexidecimal, hex2numeric, hms,
        holidays, holidaysBetween, hostName, hourly, ilspline,
-       interpNA, isEaster, isGoodFriday, isHoliday,
+       interpNA, isEaster, isFameScalar, isGoodFriday, isHoliday,
        isIntradayTif, is.jul,
-       isLeapYear, is.scalar, is.ssDate, is.ti, is.tis, jul,
+       isLeapYear, is.scalar, isScalarOrTis, is.ssDate, is.ti, is.tis, jul,
        killProcess, lastDayOf, lags, Lag, Lags, lastBusinessDayOf, lastBusinessDayOfMonth,
        latestSunday, latestMonday, latestTuesday, latestWednesday,
        latestThursday, latestFriday, latestSaturday,
@@ -170,8 +170,8 @@ S3method(ymd, ssDate)
 S3method(ymd, ti)
 
 if(tools:::.OStype() == "unix"){
-export(alarmc, fameCommand, fameDbClose, fameDbOpen, fameDeleteObject,
+export(fameCommand, fameDbClose, fameDbOpen, fameDeleteObject,
        fameRunning, fameStart, fameStatusMessage, fameStop,
-       fameWhat, fameWriteSeries, isFameScalar, isScalarOrTis)
+       fameWhat, fameWriteSeries)
 }
 

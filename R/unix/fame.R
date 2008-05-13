@@ -65,6 +65,12 @@ fameStart <- function(){
   status <- .C("cfmini", status = integer(1), PACKAGE = "fame")$status
   if(status != 0 && status != 1) stop(fameStatusMessage(status))
   boink <- .C("cfmopwk", status = integer(1), key = integer(1), PACKAGE = "fame")
+  if(boink$status == 511){
+    cat("cfmopwk (open work database) failed with code 511,",
+        "indicating an HLI internal error. Retrying in 2 seconds...\n")
+    Sys.sleep(2)
+    boink <- .C("cfmopwk", status = integer(1), key = integer(1), PACKAGE = "fame")
+  }
   if(boink$status == 0){
     if(exists("fameLocalInit", mode = "function"))
     fameLocalInit()

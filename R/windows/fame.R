@@ -32,7 +32,7 @@ putfame <- function(serlist, db,
       if(exists(rname, envir = envir))
         obj <- get(rname, envir = envir)
       else stop(paste(rname, "not found"))
-      if(!isTis(obj))
+      if(!is.tis(obj))
         stop(paste(rname, "is not a tis series"))
       zz[[i]] <- obj
     }
@@ -45,7 +45,7 @@ putfame <- function(serlist, db,
       names(zz) <- deparse(substitute(serlist))
     }
   }
-  if(!all(sapply(zz, isTis)))
+  if(!all(sapply(zz, is.tis)))
     stop("non-tis argument")
 
   nser <- length(zz)

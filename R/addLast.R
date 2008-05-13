@@ -1,8 +1,3 @@
-.Last.fame <- function(){
-  if(exists("fameRunning") && fameRunning()) fameStop()
-  if(validServerIsRunning()) endServerSession()
-}
-
 addLast <- function(fun){
   ## from Greg Warnes gtools package
   if(!is.function(fun)) stop("fun must be a function")

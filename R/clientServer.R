@@ -27,7 +27,6 @@ serveHostAndPort <- function(clientHost, clientPort, timeout = 3600, quitAfter =
   ## This is the server end
   ## Note that the server session is local to this function on the server
   ## end, while it is effectively a global variable on the client end.
-  if(runningWindows()) timeout <- NULL
   if(!is.null(timeout)) alarmc(timeout)
 
   serverHost <- hostName()
