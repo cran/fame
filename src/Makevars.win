@@ -1,3 +1,13 @@
 # PKG_CPPFLAGS
 # PKG_CFLAGS
 # PKG_LIBS
+
+ifneq ($(strip $(FAME)),)
+
+# convert backslashes
+FAMEPATH=${subst \,/,$(FAME)}
+
+CPPFLAGS += -I$(FAMEPATH) -Dfame
+PKG_LIBS += "$(FAMEPATH)/chli.dll"
+
+endif

@@ -3,26 +3,31 @@
 ## also kills the child Fame SERVER process, and getfame(), at least, always
 ## closes the databases it opened before it returns.  
 
+fameState <- function(){
+  if(!exists(".fameState", envir = baseenv()))
+    setFameState("none")
+  get(".fameState", pos = baseenv())
+}
+
+setFameState <- function(value){
+  if(!value %in% c("none", "starting", "running", "dead"))
+    stop("Bad value for fameState")
+  assign(".fameState", value, pos = baseenv())
+}
+
 fameRunning <- function(){
   ## are we already running a Fame Server process?
-  if(runningLinux()) pscmd <- "ps xo user,ppid,command"
-  else               pscmd <- "ps -xo user,ppid,command"
-
-  cmd <- paste(pscmd, 
-               "| grep", user(),
-               "| grep", pid(),
-               "| grep -i fame | grep -v defunct | grep -v exiting",
-               "| grep -v", shQuote(pscmd))
-  
-  length(system(cmd, intern = T)) > 0
+  fameState() == "running"
 }
 
 fameStop <- function(){
-  if(fameRunning()){
+  if(fameState() %in% c("starting", "running")){
     fameCommand("exit", silent = T)
-  status <- .C("cfmfin", status = integer(1), PACKAGE = "fame")$status
-  if(status != 0)
-    stop(fameStatusMessage(status))
+    status <- .C("cfmfin", status = integer(1))$status
+    if(status == 2) setFameState("none") ## HLI was not initialized
+    else            setFameState("dead")
+    if(status != 0)
+      stop(fameStatusMessage(status))
   }
   else warning("No fame process to stop")
 }
@@ -51,39 +56,53 @@ fameCommand <- function(string, silent = T, capture = F){
   invisible(boink$status)
 }
 
-fameStart <- function(){
-  ## initialize Fame HLI and open work database. Since the work database is
+fameStart <- function(workingDB = TRUE){
+  ## initialize Fame HLI and possibly open work database. Since the work database is
   ## the first one opened, its key is always 0.
-  if(fameRunning()){
+  if(fameState() == "dead") stop("Cannot restart Fame HLI after it has been killed")
+  if(fameState() == "running"){
     cat("Fame is already running\n")
     return()
   }
-  if(!is.loaded("cfmini")){
-    if(is.loaded("alarmc")) stop("fame.so built without HLI support")
-    else                    stop("fame.so has not been loaded")
+  
+  if(fameState() == "none"){ ## attempt to initialize HLI
+    if(!is.loaded("dummyFameFunction")){
+      if(runningWindows()) stop("fame.dll has not been loaded")
+      else                 stop("fame.so has not been loaded")
+    }
+    if(!is.loaded("cfmini"))
+        stop("package built without HLI support")
+    
+    status <- .C("cfmini", status = integer(1))$status
+    if(status == 3) setFameState("dead")
+    if(status != 0 && status != 1) stop(fameStatusMessage(status))
+    
+    setFameState("starting")
   }
-  status <- .C("cfmini", status = integer(1), PACKAGE = "fame")$status
-  if(status != 0 && status != 1) stop(fameStatusMessage(status))
-  boink <- .C("cfmopwk", status = integer(1), key = integer(1), PACKAGE = "fame")
-  if(boink$status == 511){
-    cat("cfmopwk (open work database) failed with code 511,",
-        "indicating an HLI internal error. Retrying in 2 seconds...\n")
-    Sys.sleep(2)
-    boink <- .C("cfmopwk", status = integer(1), key = integer(1), PACKAGE = "fame")
+  
+  if(workingDB){
+    status <- .C("cfmopwk", status = integer(1), key = integer(1))$status
+    if(status == 511){
+      cat("cfmopwk (open work database) failed with code 511,",
+          "indicating an HLI internal error. Retrying in 2 seconds...\n")
+      Sys.sleep(2)
+      status <- .C("cfmopwk", status = integer(1), key = integer(1))$status
+    }
+    if(status != 0){
+      fameStop()
+      msg <- paste("cfmopwk (open work database) failed with code ",
+                   status, ", which supposedly means ",
+                   fameStatusMessage(status), sep = "")
+      stop(msg)
+    }
   }
-  if(boink$status == 0){
-    if(exists("fameLocalInit", mode = "function"))
-    fameLocalInit()
-  }
-  else {
-    fameStop()
-    msg <- paste("cfmopwk (open work database) failed with code ",
-                 boink$status, ", which supposedly means ",
-                 fameStatusMessage(boink$status), sep = "")
-    stop(msg)
-  }
+  
+  if(exists("fameLocalInit", mode = "function"))
+    get("fameLocalInit", pos=1)()
+  
+  setFameState("running")
 }
-
+  
 fameModeInt <- function(string){
   modes <- c(read = 1, create = 2, overwrite = 3, update = 4, shared = 5)
   if(is.na(modeNumber <- modes[string]))
@@ -135,7 +154,7 @@ getFamePath <- function(dbString){
   ## define fameLocalPath if you have a way to find the path to a database 
   ## return NULL if database corresponding to dbString could not be found
   if(exists("fameLocalPath", mode = "function")){
-    path <- fameLocalPath(dbString)
+    path <- get("fameLocalPath", pos=1)(dbString)
     if(path != dbString) return(path)
   }
   else path <- dbString
@@ -248,11 +267,6 @@ getfame <- function(sernames, db, save = F, envir = parent.frame(),
           }
           else {
             tif <- fameToTif(atts$freq)
-            if(tif == 1015){
-              ## use reserves frequency rather than bw1wednesday if possible
-              if((100*(atts$fyear) + atts$fprd) > 198403)
-                tif <- 1011
-            }
             ## set date ranges
             dbStart <- ti(c(atts$fyear, atts$fprd), tif)
             dbEnd   <- dbStart + atts$obs - 1
@@ -828,6 +842,29 @@ fameWildlist <- function(db, wildString = "?", nMax = 1000, charMode = T){
   z
 }
 
+getFameAttribute <- function(attribute, fname, db){
+  path <- getFamePath(db)
+  if(is.null(path)) stop(paste("cannot read", db))
+  if(!fameRunning()) fameStart()
+  
+  openCommand <- paste('open <access read> "', path, '" as blah', sep = "")
+  attrCommand <- paste("display ", attribute, "(", fname, ")", sep = "")
+  
+  if(fameCommand(openCommand) != 0) stop("couldn't open db")
+  on.exit(fameCommand("close blah"))
+  
+  strings <- fameCommand(attrCommand, silent = T, capture = T)
+  status <- attr(strings, "status")
+  if(status != 0) stop(paste("bad status", status, "returned by", attrCommand))
+  retval <- tolower(strings[strings != ""])
+  rvname <- retval[1]
+  retval <- retval[-1]
+  if(length(retval) > 1) 
+    retval <- list(retval)
+  names(retval) <- rvname
+  retval
+}
+
 fameStatusMessage <- function(code){
   switch(as.character(code),
 	 "0"   = "Success.",
@@ -936,6 +973,6 @@ fameStatusMessage <- function(code){
 fameClasses   <- c(series = 1, scalar = 2, formula = 3)
 fameTypes     <- c(undefined = 0, numeric = 1, namelist = 2,
                    boolean = 3, string = 4, precision = 5, date = 6)
-fameBasiss    <- c(undefined = 0, daily = 1, business = 2)
-fameObserveds <- c(undefined = 0, beginning = 1, ending = 2, averaged = 3,
+  fameBasiss    <- c(undefined = 0, daily = 1, business = 2)
+  fameObserveds <- c(undefined = 0, beginning = 1, ending = 2, averaged = 3,
                    summed = 4, annualized = 5, formula = 6, high = 7, low = 8)

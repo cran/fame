@@ -1,4 +1,9 @@
 #include "R.h"
+
+void dummyFameFunction(int *status){
+  return;
+}
+
 #ifdef fame
 #include "hli.h"
 
@@ -46,7 +51,7 @@ void fameWhat(int *status, int *dbkey, char **objnam, int *class,
   /* Get info about an object. Note that range should be an int[3] on input */
   int cyear, cmonth, cday, myear, mmonth, mday;
   int i;
-  char fdes[256], fdoc[256], *des, *doc;
+  char fdes[256], fdoc[256];
   
   if(*getdoc){
 	if(strlen(*desPtr) < 256 || strlen(*docPtr) < 256){

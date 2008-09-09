@@ -4,86 +4,35 @@ package also provide an alternative to the somewhat inflexible ts class in the
 standard R stats package. The tis class maps very closely to the FAME notion
 of what a time series is.  
 
-Linux INSTALLATION: 
-
 There is no standard location for a FAME installation, so the configure script
-makes no attempt to look for one.  Instead, you must tell R where to find FAME
-HLI library and header files.  This can be done in one of two ways:
+makes no attempt to look for one.  Instead, you must tell R where the main
+fame directory is, i.e., the directory that, on Windows contains hli.h and the
+chli.dll, and on Unix contains an hli subdirectory which in turn contains
+hli.h and the libchli.so library.  (Note that on 64 bit Linux, the 64-bit
+libraries are in $fameDir/hli/64, while the hli.h is in $fameDir/hli.)
+
+You can tell R where the directory is in one of two ways:
 
  (i) The configure script first looks for a FAME environment variable.  If it
-     finds one, the HLI directory is assumed to be $FAME/hli.
+     finds one, then on Windows the hli.h file should be $FAME/hli.h while on
+     Linux it should be $FAME/hli/hli.h.
 
 (ii) Whether there is a FAME environment variable set or not, you can install
-     the package with a configure arg  --with-fameHliDir=DIR , i.e., 
+     the package with a configure arg  --with-fameDir=DIR , i.e., 
 
-R CMD INSTALL --library=library --configure-args='--with-fameHliDir=/opt/fame/fame/hli' fame_1.0.tar.gz
+R CMD INSTALL --library=library --configure-args='--with-fameDir=/opt/fame/fame' fame_1.0.tar.gz
 
-Supplying the HLI location via --configure-args overrides any FAME environment
+Supplying the fameDir location via --configure-args overrides any FAME environment
 variable.  
 
-If the configure script does not find the HLI directory for any reason, the
-package is built and installed without FAME support.
-
-.Rprofile CONFIGURATION
-
-Your .Rprofile should look something like this:
-
-options(defaultPackages = c(getOption("defaultPackages"), "fame"))
-.First.sys()
-.First <- function(){
-  options(error = quote(recover()), locatorBell = FALSE)
-  ps.options(pointsize = 10)
-  ## print startup message and finish
-  cat(date(), " R started in", pwd(), "by", user(), "with search path\n")
-  print(search())
-  ## Run command line program if there is one
-  if(length(.cmd <- commandLineString()) > 0)
-    try(source(textConnection(.cmd), echo = T, prompt.echo = "> "))
-}
-
-The ordering of package loading is important. fame (this pkg) has new
-implementations of some functions found in the stats and base packages, so it
-must appear on the search() list ahead of them.  The standard .First.sys()
-proceeds in order through the defaultPackages list, loading each package in
-turn to the second position on the search list.  Putting fame last on the
-defaultPackages list means it ends up in position 2 in front of the other packages.
-
-.First.sys() loads the default packages.  Normally, the R startup sequence
-runs .First.sys() only after it has run .First(), but this is backwards, since it
-implies that code in .First() can not make use of the functionality supplied
-by packages.  So runs .First.sys() before running .First().
-
-The commandLineString() function is part of this package.  It retrieves
-whatever followed --args on the command line, and the .First() function above
-proceeds to run it.
-
-Windows INSTALLATION:
-
-The package build without direct FAME support under Windows. The Windows
-versions of getfame(), putfame(), fameWhats() and fameWildlist() assume that
-you have ssh and socket access to a Linux machine that can run R and FAME.
-The Linux R machine must have an .Rprofile set up (as outlined above) to load the
-fame package on startup, and to run code supplied on the command when R is
-started.  The first time one of the FAME interface functions is called, 
-startRemoteServer() fires up an R server session on the Linux machine. The
-Windows FAME functions send R code to the server and wait for results coming
-back through a socket connection.
+If the configure script does not find $fameDir, the installation fails.
 
 
 CUSTOMIZATION:
-There are three functions that you may want to (re)implement and put ahead of
+There are two functions that you may want to (re)implement and put ahead of
 fame on the search path.  
 
-  (i) localSsh():  The package comes with Unix and Windows ssh() functions.
-      The Unix version assumues that ssh is installed and correctly set up,
-      which it probably is on a modern system.  The Windows version uses the 
-      'plink' program from the open-source PuTTY ssh client.
-      If you want to use some other ssh client, you can write a function
-      called 'localSsh' taking the same arguments as 'ssh' does.  The 'ssh'
-      function looks to see if such a function exists; if it does, it is
-      called instead of running the body of 'ssh'.
-
- (ii) fameLocalInit():  When starting FAME, the fameStart() function opens a
+  (i) fameLocalInit():  When starting FAME, the fameStart() function opens a
       work database and then invokes fameLocalInit(), if it exists. My own
       version (not part of this package) loads some additional Federal Reserve
       Board code, i.e.,
@@ -93,7 +42,7 @@ fame on the search path.
         fameCommand('load file("/opt/fame/frb/pc/syslib.pc")', silent = T)
       }
 
-(iii) fameLocalPath(dbString):  takes a string argument and returns a string,
+ (ii) fameLocalPath(dbString):  takes a string argument and returns a string,
       which should either be a path to a database or the input string. 
       This is called by the internal function getFamePath(dbString), which
       first checks to see if dbString is already the path to an existing file.
@@ -107,19 +56,3 @@ fame on the search path.
 	  name.  So our fameLocalPath() tries the registered databases lookup,
 	  returning the path name if it succeeds, or the original dbString.
 
-Setting Default Frequencies: 
-
-Fame has seven weekly frequencies for weeks ending on Sunday, Monday, and it
-has 12 annual frequencies, for years ending on the last day of each of the
-12 months. There are also multiple biweekly, bimonthly and semiannual
-frequencies.  
-At any time you can use the function setDefaultFrequencies() to change which
-actual frequencies the strings "weekly", "biweekly", "bimonthly",
-"quarterly", "semiannual" and "annual" refer to.   
-
-LAGS:
-
-The lag(x, k) function says that a series lagged by a positive k starts
-earlier.  The opposite is true for the Lag function in this package, to
-maintain consistency with the common usage of 'first lag, second lag' and so
-on in econometrics.

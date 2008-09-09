@@ -1,47 +1,58 @@
-AC_INIT([fame], 1.09)
-dnl See if user specified fame directory
-hliDir=""
-if test $FAME ; then
-	hliDir="${FAME}/hli"
-fi
-AC_ARG_WITH([fameHliDir],
-		    AC_HELP_STRING([--with-fameHliDir=DIR],
-                           [specify the FAME HLI directory, home of hli.h and libchli.a]),
-		    [hliDir=$withval])
-
-hliType="none"
-if test [ -n "$hliDir" ] ; then
-   AC_CHECK_FILE("$hliDir",            hliType="nodir")
-   AC_CHECK_FILE("$hliDir/libchli.a",  hliType="static")
-   AC_CHECK_FILE("$hliDir/libchli.so", hliType="dynamic")
-fi
-
+AC_INIT([fame], 2.0)
+dnl initialize to blanks
 AC_SUBST([CPPFLAGS], [""])
 AC_SUBST([LIBS], [""])
-AC_SUBST([HAVE_FAME], ["FALSE"])
+fameDir=""
+includeDir=""
+libType="none"
 
-if test "$hliType" = "none" ; then
-   AC_MSG_NOTICE("Fame HLI directory not specified via FAME environment variable")
-   AC_MSG_NOTICE("Fame HLI directory not specified via --with-fameHliDir argument")
-   AC_MSG_WARN("No HLI directory was specified so FAME support will not be compiled. See the README file for help")
+dnl See if user specified fame directory
+if test $FAME ; then
+	fameDir="${FAME}"
+fi
+AC_ARG_WITH([fameDir],
+		    AC_HELP_STRING([--with-fameDir=DIR],
+                           [specify the FAME directory, which may have an hli subdirectory]),
+		    [fameDir=$withval])
+
+if test $fameDir; then
+  AC_CHECK_FILE("$fameDir/hli.h",      includeDir="$fameDir")
+  AC_CHECK_FILE("$fameDir/hli/hli.h",  includeDir="$fameDir/hli")
+
+  dnl find out if this is 64-bit version of R
+  libnn=`R CMD config LIBnn`
+
+  dnl set libDir to directory containing chli.dll, libchli.so, or libchli.a
+  if test "$libnn" = "lib64" ; then
+    libDir="$fameDir/hli/64"
+  else
+    libDir="$fameDir/hli"
+  fi
+  AC_CHECK_FILE("$libDir/hli", libDir="$libDir/hli")
+  AC_CHECK_FILE("$libDir/libchli.a",  libType="static")
+  AC_CHECK_FILE("$libDir/libchli.so", libType="dynamic")
 fi
 
-if test "$hliType" = "nodir" ; then
-   AC_MSG_WARN("Specified HLI directory does not exist. FAME support will not be compiled. See the README file for help")
-fi
-
-if test "$hliType" = "static" ; then
-   AC_SUBST([CPPFLAGS], ["PKG_CPPFLAGS= -I${hliDir} -Dfame"])
-   AC_SUBST([LIBS], ["PKG_LIBS= -L${hliDir} -lm -lc -lcrypt -lchli"])
-   AC_SUBST([HAVE_FAME], ["TRUE"])
-fi
-
-if test "$hliType" = "dynamic" ; then
-   AC_SUBST([CPPFLAGS], ["PKG_CPPFLAGS= -I${hliDir} -Dfame"])
-   AC_SUBST([LIBS], ["PKG_LIBS= -lm -lc -lcrypt -L${hliDir} -Wl,-rpath=${hliDir} -lchli"])
-   AC_SUBST([HAVE_FAME], ["TRUE"])
-fi
+if test "$libType" = "none" -o "$includeDir" = "" ; then
+  AC_MSG_NOTICE("HLI interface will not built because")
+  if test "$fameDir" = "" ; then
+    AC_MSG_NOTICE("No fameDir specified via --with-fameDir or FAME environment variable.")
+  fi
+  if test "$includeDir" = "" ; then
+    AC_MSG_NOTICE("Fame HLI header hli.h not found")
+  fi
+  if test "$libType" = "none" ; then
+    AC_MSG_NOTICE("Fame HLI library (libchli.so or libchli.a) not found.")
+  fi
+else
+  AC_SUBST([CPPFLAGS], ["PKG_CPPFLAGS= -I${includeDir} -Dfame"])
+  if test "$libType" = "static" ; then
+    AC_SUBST([LIBS], ["PKG_LIBS= -L${libDir} -lm -lc -lcrypt -lchli"])
+  fi
+  if test "$libType" = "dynamic" ; then
+    AC_SUBST([LIBS], ["PKG_LIBS= -lm -lc -lcrypt -L${libDir} -Wl,-rpath=${libDir} -lchli"])
+  fi
+fi				  
 
 AC_CONFIG_FILES([src/Makevars])
-AC_CONFIG_FILES([R/unix/zzz.R])
 AC_OUTPUT

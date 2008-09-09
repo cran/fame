@@ -2,6 +2,7 @@
 \alias{fameRunning}
 \alias{fameStart}
 \alias{fameStop}
+\alias{fameState}
 \alias{fameCommand}
 \alias{fameStatusMessage}
 \alias{fameDbOpen}
@@ -22,7 +23,7 @@
   "FAME SERVER" already running under the user's id and with the current
   R process as its parent process.
 
-  \code{fameStart} initializes the FAME HLI and opens a work database.
+  \code{fameStart} initializes the FAME HLI and may open a work database.
   Since the work database is always the first one opened, its key is
   always 0.
 
@@ -33,6 +34,14 @@
   the child FAME SERVER process.  So it rarely makes sense to call
   \code{fameStop} explicitly, as it makes any subsequent FAME
   interaction in the current R session impossible.
+
+  \code{fameState} returns the state of the FAME HLI interface, which is
+  one of \code{c("none", "starting", "running", "dead")}.  "none" means
+  the HLI has not been started, "starting" means the HLI has not
+  finished starting yet (this usually indicates an error), "running"
+  means the HLI is up and running, while "dead" means the HLI has been
+  killed, either by an error or by \code{fameStop}.  In either case,
+  once the HLI is "dead", it cannot be revived.
 
   \code{fameCommand} sends its string argument to the child FAME SERVER
   process to be executed.  If \code{silent} is \code{TRUE}, it invisibly
@@ -77,8 +86,9 @@
 }  
 \usage{
 fameRunning()
-fameStart()
+fameStart(workingDB = TRUE)
 fameStop()
+fameState()
 fameCommand(string, silent = T, capture = F)
 fameStatusMessage(code)
 fameDbOpen(dbName, accessMode = "read")
@@ -88,6 +98,8 @@ fameWriteSeries(dbKey, fname, ser, update = F, checkBasisAndObserved = F)
 fameWhat(dbKey, fname, getDoc = F)
 }
 \arguments{
+  \item{workingDB}{if \code{TRUE} (the default) open a temporary working
+  database whose \code{dbKey} will be 0}
   \item{string}{a FAME command to be executed}
   \item{silent}{run the command quietly if \code{TRUE}}
   \item{capture}{capture and return strings from the FAME output channel
@@ -113,6 +125,8 @@ fameWhat(dbKey, fname, getDoc = F)
   \code{fameRunning} return a Boolean.
 
   \code{fameStart} and \code{fameStop} return nothing.
+
+  \code{fameStatus} returns a string as documented above.
 
   If \code{capture} is \code{FALSE}, \code{fameCommand} invisibly returns a status code.
   If \code{capture} is \code{TRUE}, strings sent to the FAME output

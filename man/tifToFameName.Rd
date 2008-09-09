@@ -12,7 +12,7 @@ tifToFameName(tif)
 \value{A character vector as long as the input giving the FAME names of
   the input.}
 \author{ Jeff Hallman }
-\seealso{ \code{\link{tif}}, \code{\link{tifName}}}
+\seealso{ \code{\link[tis:tif]{tif}}, \code{\link[tis:tif]{tifName}}}
 \examples{
 tifToFameName(tif(today()))
 tifToFameName(tif(latestMonth()))

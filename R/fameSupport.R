@@ -1,3 +1,26 @@
+fameDateString <- function(xTi){
+  tif <- tif(xTi)
+  freq <- frequency(xTi)
+  ans <- character(length(xTi))
+  intraday <- isIntradayTif(tif)
+
+  if(any(intraday)){
+    intradayTif <- tif[intraday]
+    firstTif <- intradayTif[1]
+    if(length(intradayTif) > 1 && any(intradayTif != firstTif))
+      stop("intraday args must all have same frequency")
+    fmt <-paste("%d%b%Y:",
+                c("%H","%H:%M","%H:%M:%S")[(firstTif %/% 1000) - 1],
+                sep = "")
+    ans[intraday] <- format(xTi[intraday], fmt)
+  }
+  if(any(!intraday)){
+    z <- xTi[!intraday]
+    ans[!intraday] <- paste(year(z), cycle(z), sep = ":")
+  }
+  ans
+}
+
 convertFreqCode <- function(tif = NULL, fame = NULL){
   ## Vectors of Fame and ti (time index) frequency codes
   tiFreqs   <- 1000 + (1:50)[-11]  ## Fame has no "reserves" frequency

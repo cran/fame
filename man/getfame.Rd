@@ -16,10 +16,9 @@
   well as start (a \code{ti} Time Index) and length. If \code{getDoc} is
   \code{TRUE}, it will also include \code{description} and
   \code{documentation} components.
-#ifdef unix
+
   \code{fameWhats} is a wrapper around the function \code{fameWhat},
   which provides the same information in a lower-level form.
-#endif
 
   \code{fameWildlist} returns a list giving the name, class, type and
   frequency of the objects in the database with names that match
@@ -61,13 +60,13 @@ fameWildlist(db, wildString = "?", nMax = 1000, charMode = T)
     of the caller.
   }
   \item{start}{
-    a \code{ti} object, or something that the \code{\link{ti}} function
+    a \code{ti} object, or something that the \code{\link[tis:ti]{ti}} function
     can turn into a \code{ti} object.  The time index for the first
     observation in the returned series.  The default is the series start
     in the database.
   }
   \item{end}{
-    a \code{ti} object, or something that the \code{\link{ti}} function
+    a \code{ti} object, or something that the \code{\link[tis:ti]{ti}} function
     can turn into a \code{ti} object.  The time index for the last
     observation in the returned series.  The default is the series end
     in the database.
@@ -163,9 +162,8 @@ fameWildlist(db, wildString = "?", nMax = 1000, charMode = T)
   \code{putfame} invisibly returns an empty string.
 }
 \author{ Jeff Hallman }
-#ifdef unix
 \note{
-  The Linux versions of these functions use the Fame HLI and a child server
+  These functions use the Fame HLI and a child server
   process.  The function \code{fameRunning} is called to see if the
   server process is already running.  If not, \code{fameStart} starts it
   and the HLI.  Your .Last function should call \code{fameStop} to shut
@@ -176,15 +174,7 @@ fameWildlist(db, wildString = "?", nMax = 1000, charMode = T)
   as long as the R session is alive.  Death of the R process kills the
   server process as well. 
 }
-#endif
-#ifdef windows
-\note{
-  The Windows versions of these functions work by starting an R session
-  on a Linux server and running the Fame queries there. See
-  \code{\link{startRemoteServer}} for details.
-}
-#endif
-\seealso{ \code{\link{ti}}, \code{\link{tis}}, \code{\link{startRemoteServer}}}
+\seealso{ \code{\link[tis:ti]{ti}}, \code{\link[tis:tis]{tis}}}
 \examples{
 \dontrun{
 usdb <- "/fame/data/database/us.db"
