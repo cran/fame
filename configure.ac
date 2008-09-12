@@ -1,4 +1,4 @@
-AC_INIT([fame], 2.0)
+AC_INIT([fame], 2.3)
 dnl initialize to blanks
 AC_SUBST([CPPFLAGS], [""])
 AC_SUBST([LIBS], [""])

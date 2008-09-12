@@ -2,12 +2,10 @@
 # PKG_CFLAGS
 # PKG_LIBS
 
-ifneq ($(strip $(FAME)),)
+# We build a dummy chli.dll to satisfy fame externals
+CPPFLAGS += -Dfame
 
-# convert backslashes
-FAMEPATH=${subst \,/,$(FAME)}
+fame.dll: chli.dll
 
-CPPFLAGS += -I$(FAMEPATH) -Dfame
-PKG_LIBS += "$(FAMEPATH)/chli.dll"
-
-endif
+chli.dll: chli.c
+	gcc  -shared -s  -o chli.dll chli.c -DDUMMY_CALLS

@@ -1,31 +1,38 @@
 This package provides an interface to the FAME time series database from
-Sungard. The ti (TimeIndex) and tis (Time Indexed Series) classes in the 
-package also provide an alternative to the somewhat inflexible ts class in the
-standard R stats package. The tis class maps very closely to the FAME notion
-of what a time series is.  
+Sungard.  If you don't have the FAME DBMS installed, this package is pretty
+useless.  The ti (Time Index) and tis (Time Indexed Series) functionality of
+earlier versions has been separated out into the tis package, which does not
+need FAME.
+
+LINUX INSTALLATION
 
 There is no standard location for a FAME installation, so the configure script
 makes no attempt to look for one.  Instead, you must tell R where the main
-fame directory is, i.e., the directory that, on Windows contains hli.h and the
-chli.dll, and on Unix contains an hli subdirectory which in turn contains
-hli.h and the libchli.so library.  (Note that on 64 bit Linux, the 64-bit
-libraries are in $fameDir/hli/64, while the hli.h is in $fameDir/hli.)
+fame directory is, i.e., the directory that contains the hli subdirectory
+which in turn contains hli.h and the libchli.so library.  Note that on 64 bit
+Linux, the 64-bit libraries are in $fameDir/hli/64, while the hli.h is in
+$fameDir/hli. 
 
 You can tell R where the directory is in one of two ways:
 
- (i) The configure script first looks for a FAME environment variable.  If it
-     finds one, then on Windows the hli.h file should be $FAME/hli.h while on
-     Linux it should be $FAME/hli/hli.h.
+ (i) If the FAME environment variable is set, the hli.h file should be $FAME/hli/hli.h.
 
-(ii) Whether there is a FAME environment variable set or not, you can install
-     the package with a configure arg  --with-fameDir=DIR , i.e., 
+(ii) use a configure arg  --with-fameDir=DIR , i.e., 
 
-R CMD INSTALL --library=library --configure-args='--with-fameDir=/opt/fame/fame' fame_1.0.tar.gz
+R CMD INSTALL --library=library --configure-args='--with-fameDir=/opt/fame/fame' fame_2.3.tar.gz
 
-Supplying the fameDir location via --configure-args overrides any FAME environment
-variable.  
+Supplying the fameDir location via --configure-args overrides any FAME
+environment variable.  
 
-If the configure script does not find $fameDir, the installation fails.
+If no fameDir is found, the install process will build an utterly useless
+fame.so containing only a dummyFameFunction.
+
+
+WINDOWS INSTALLATION
+
+The package does not need FAME installed to build or install.  However, it
+does expect to find a FAME installation either in c:/Program Files/FAME or in
+the directory given by the environment variable FAME.
 
 
 CUSTOMIZATION:

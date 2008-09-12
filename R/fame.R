@@ -23,7 +23,7 @@ fameRunning <- function(){
 fameStop <- function(){
   if(fameState() %in% c("starting", "running")){
     fameCommand("exit", silent = T)
-    status <- .C("cfmfin", status = integer(1))$status
+    status <- .C("fameStop", status = integer(1), PACKAGE = "fame")$status
     if(status == 2) setFameState("none") ## HLI was not initialized
     else            setFameState("dead")
     if(status != 0)
@@ -70,10 +70,14 @@ fameStart <- function(workingDB = TRUE){
       if(runningWindows()) stop("fame.dll has not been loaded")
       else                 stop("fame.so has not been loaded")
     }
-    if(!is.loaded("cfmini"))
-        stop("package built without HLI support")
     
-    status <- .C("cfmini", status = integer(1))$status
+    if(runningLinux() && !is.loaded("fameInit"))
+      stop("package built without HLI support")
+    
+    if(runningWindows() && !is.loaded("cfmini"))
+      stop("HLI functions from chli.dll not found")
+    
+    status <- .C("fameInit", status = integer(1), PACKAGE = "fame")$status
     if(status == 3) setFameState("dead")
     if(status != 0 && status != 1) stop(fameStatusMessage(status))
     
@@ -81,12 +85,16 @@ fameStart <- function(workingDB = TRUE){
   }
   
   if(workingDB){
-    status <- .C("cfmopwk", status = integer(1), key = integer(1))$status
+    status <- .C("fameOpenWorkDb",
+                 status = integer(1), key = integer(1),
+                 PACKAGE = "fame")$status
     if(status == 511){
       cat("cfmopwk (open work database) failed with code 511,",
           "indicating an HLI internal error. Retrying in 2 seconds...\n")
       Sys.sleep(2)
-      status <- .C("cfmopwk", status = integer(1), key = integer(1))$status
+      status <- .C("fameOpenWorkDb",
+                   status = integer(1), key = integer(1),
+                   PACKAGE = "fame")$status
     }
     if(status != 0){
       fameStop()

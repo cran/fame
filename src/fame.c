@@ -5,7 +5,36 @@ void dummyFameFunction(int *status){
 }
 
 #ifdef fame
+
+#ifdef WIN32
+#include "fame.h"
+#else
 #include "hli.h"
+#endif
+
+/* R CMD check complains if any foreign function calls do not use the
+   'PACKAGE' argument to restrict the symbol lookup to the package dll.
+   But on Windows the chli functions reside only in the FAME-supplied
+   chli.dll, not the package dll built by R CMD INSTALL, so they are not
+   found if PACKAGE = "fame" is set.  To get around this, I don't call 
+   chli function directly from R, only from C, even though it means I had 
+   to write stupid wrapper functions fameInit, fameOpenWorkDb, and fameStop. 
+*/ 
+
+void fameInit(int *status){
+  cfmini(status);
+  return;
+}
+
+void fameOpenWorkDb(int *status, int *key){
+  cfmopwk(status, key);
+  return;
+}
+
+void fameStop(int *status){
+  cfmfin(status);
+  return;
+}
 
 void fameCommand(int *status, char **command, char **errorMsg){
   int errStatus = 0;
@@ -300,4 +329,9 @@ void fameWriteRange(int *status, int *dbKey, char **objnam,
   return;
 }
 
+void fameEval(int *status, int *dbkey, char *expr, char *optns,
+			  int *wdbkey, char *objnam){
+  cfmrmev(status, *dbkey, expr, optns, *wdbkey, objnam);
+}
+ 
 #endif /* fame */

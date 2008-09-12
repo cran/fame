@@ -1,8 +1,8 @@
 .onLoad <- function(libname, pkgname){
-  ## Could not figure out how to make Windows dynamic linking work, so instead
-  ## load the chli.dll first, then the fame.dll after.
+  ## If FAME is installed on this machine, load the real chli.dll first,
+  ## then the fame.dll after.  Otherwise, load neither.
 
-  ## find chli.dll and load it
+  ## first find out if we even have FAME
   fameDir <- Sys.getenv("FAME")
   if(nchar(fameDir) == 0){
     defaultDir <- "C:/Program Files/FAME"
@@ -14,21 +14,33 @@
   if(!file.exists(fameDir)){
     noFameMessage <-
       paste("FAME directory", fameDir, "not found.\n",
-            "If you have FAME installed, specify it's location via the FAME environment variable.\n",
+            "If you have FAME installed, specify it's location",
+            "via the FAME environment variable.\n",
             "Otherwise, this package is pretty useless.\n")
     cat(noFameMessage)
   }
-  else {
+  else {  ## apparently FAME is installed
+
     chliPath <- file.path(fameDir, "chli.dll")
-    if(!file.exists(chliPath))  stop(paste("chli.dll not found in", fameDir))
+
+    if(!file.exists(chliPath))
+      stop(paste("chli.dll not found in", fameDir))
+    dyn.load(chliPath, local = FALSE)
+    if(is.loaded("cfmini"))
+      assign(".chliPath", chliPath, pos = baseenv())
+    else stop("Could not load chli.dll")
     
-    dyn.load(chliPath)
-    if(!is.loaded("cfmini"))
-      stop("Could not load chli.dll")
+    library.dynam("fame", package = "fame")
+    if(!is.loaded("dummyFameFunction"))
+      stop("Could not load fame.dll")
   }
-  ## find and load fame.dll 
-  libsDir <- file.path(libname, pkgname, "libs")
-  dllPath <- file.path(libsDir, paste(pkgname, "dll", sep = "."))
-  if(!file.exists(dllPath)) stop(paste("fame.dll not found in", libsDir))
-  dyn.load(dllPath)
 }
+
+.onUnload <- function(libpath){
+  if(exists(".chliPath", envir = baseenv())){
+    dyn.unload(get(".chliPath", pos = baseenv()))
+    remove(".chliPath", pos = baseenv())
+    library.dynam.unload("fame", libpath)
+  }
+}
+
