@@ -23,5 +23,4 @@
   function returns \code{dbString} if it is a valid path to an existing
   readable file, or \code{NULL} if it is not. 
 }  
-\author{ Jeff Hallman }
 \keyword{ database }

@@ -2,7 +2,7 @@
    It is only needed for the WINDOWS build process and does not need to be
    installed since the Window .onLoad() function picks up the real chli.dll. */
    
-
+dummyFunctionToAvoidEmptySourceFileWarning() { return -999999;}
 #ifdef DUMMY_CALLS
 
 cfmcldb() { return -999999;}

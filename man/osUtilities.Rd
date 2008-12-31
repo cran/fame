@@ -18,5 +18,4 @@ runningWindows()
 }
 \arguments{
 }
-\author{ Jeff Hallman }
 \keyword{utilities}

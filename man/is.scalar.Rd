@@ -16,7 +16,6 @@ isFameScalar(x)
 }
 \value{\code{TRUE} or \code{FALSE}.
 }
-\author{ Jeff Hallman }
 \examples{
 isFameScalar("this is a scalar, since it has length one")
 isFameScalar(c("returns FALSE", "since it has length two"))

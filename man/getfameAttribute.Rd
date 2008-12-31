@@ -15,7 +15,6 @@ getFameAttribute(attribute, fname, db)
 getFameCreated(fname, db)
 getFameUpdated(fname, db)
 }
-%- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{attribute}{
 	string naming the attribute to be returned}
@@ -38,7 +37,6 @@ getFameUpdated(fname, db)
   \code{getFameCreated} and \code{getFameUpdated} each return a
   \code{POSIXlt} object.
 }
-\author{ Jeff Hallman }
 \examples{
 \dontrun{
 getFameUpdated("gdp.q", db = "us")

@@ -161,7 +161,6 @@ fameWildlist(db, wildString = "?", nMax = 1000, charMode = T)
 
   \code{putfame} invisibly returns an empty string.
 }
-\author{ Jeff Hallman }
 \note{
   These functions use the Fame HLI and a child server
   process.  The function \code{fameRunning} is called to see if the

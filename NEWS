@@ -1,0 +1,20 @@
+Changes in Version 2.4
+
+  o  minor documentation cleanup
+
+Changes in Version 2.0
+
+  o  functions implementing the ti and tis classes were split off into their
+     own package called "tis", which this package depends on.
+
+  o  The remote Fame and client-server functionality was removed due to security
+     concerns and because the Rserve package offers a better way to do this.
+
+  o  It works with Windows FAME!
+
+  o  The addLast() function that modified the .Last function in the global
+     environment was a bad idea.
+
+  o  The functions hexidecimal and hex2numeric were unnecessary, as the same
+     things can be accomplished with sprintf() and evaluating hex strings with
+     "0x" pasted on the front.
