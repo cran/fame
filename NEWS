@@ -1,3 +1,8 @@
+Changes in Version 2.5
+
+  o fixed getFamePath() to use file.access() function rather than hope that
+    the operating system knows what the "test" program is supposed to do.
+
 Changes in Version 2.4
 
   o  minor documentation cleanup

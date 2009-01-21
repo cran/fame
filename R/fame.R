@@ -167,9 +167,15 @@ getFamePath <- function(dbString){
   }
   else path <- dbString
   
-  if(system(paste("test -r", path), intern = F) == 0)
-    path
-  else NULL
+  if(file.access(path, 4) == 0)
+    return(path)
+  else {
+    if(file.access(path, 0) != 0)
+      cat("Could not find", path, "\n")
+    else
+      cat("File", path, "exists, but cannot be read\n")
+    return(NULL)
+  }
 }
 
 isFameScalar <- function(x){
