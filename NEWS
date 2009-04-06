@@ -1,3 +1,7 @@
+Changes in Version 2.6
+
+  o minor changes to documentation
+
 Changes in Version 2.5
 
   o fixed getFamePath() to use file.access() function rather than hope that

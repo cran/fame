@@ -40,12 +40,7 @@ fameWildlist(db, wildString = "?", nMax = 1000, charMode = T)
   \item{db}{
     string giving the relative or full path to the Fame database to read
     or write from. If the \code{fameLocalPath()} function is defined, it
-    will be called on this argument to obtain a path.  At the Federal
-    Reserve Board, \code{fameLocalPath()} knows how to look up the path
-    for 'registered' databases given only their names, e.g., "us",
-    "intl", and so on.  Full path names are thus unnecessary for
-    registered databases, and in fact are a bad idea, since the database
-    might get moved.
+    will be called on this argument to obtain a path.
   }
   \item{save}{
     if \code{T} the retrieved series are individually saved in the
@@ -176,13 +171,13 @@ fameWildlist(db, wildString = "?", nMax = 1000, charMode = T)
 \seealso{ \code{\link[tis:ti]{ti}}, \code{\link[tis:tis]{tis}}}
 \examples{
 \dontrun{
-usdb <- "/fame/data/database/us.db"
-boink <- getfame("gdp.q", db = usdb)     ## returns a list
+mydb <- "pathToMyDatabase"
+boink <- getfame("gdp.q", db = mydb)     ## returns a list
 gpd.q <- boink[[1]]                      ## or boink$gdp.q
-getfame("gdp.q", db = usdb, save = TRUE) ## saves gdp.q in the current frame
+getfame("gdp.q", db = mydb, save = TRUE) ## saves gdp.q in the current frame
 
 ## saves the series as "nominalIncome"
-getfame(c(nominalIncome = "gdp.q"), db = usdb, save = TRUE)
+getfame(c(nominalIncome = "gdp.q"), db = mydb, save = TRUE)
 seriesA <- tis(1:24, start = c(2002, 1), freq = 12)
 seriesB <- tis(1:104, start = c(2002, 1), tif = "wmonday")
 documentation(seriesB) <- paste("Line", 1:4, "of seriesB documentation")
