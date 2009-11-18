@@ -1,3 +1,11 @@
+Changes in Version 2.7
+
+  o Thanks to Paul Gilbert (with an assist from Duncan Murdoch) for coming up
+    with a Makevars.win file that actually works.  The Windows build works again!
+
+  o For formula series, get description and documentation attributes from the
+    formula, not from the series that results from evaluating the formula.
+
 Changes in Version 2.6
 
   o minor changes to documentation

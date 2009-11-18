@@ -89,13 +89,13 @@ fameRunning()
 fameStart(workingDB = TRUE)
 fameStop()
 fameState()
-fameCommand(string, silent = T, capture = F)
+fameCommand(string, silent = TRUE, capture = FALSE)
 fameStatusMessage(code)
-fameDbOpen(dbName, accessMode = "read")
+fameDbOpen(dbName, accessMode = "read", stopOnFail = TRUE)
 fameDbClose(dbKey)
 fameDeleteObject(db, fname)
-fameWriteSeries(dbKey, fname, ser, update = F, checkBasisAndObserved = F)
-fameWhat(dbKey, fname, getDoc = F)
+fameWriteSeries(dbKey, fname, ser, update = FALSE, checkBasisAndObserved = FALSE)
+fameWhat(dbKey, fname, getDoc = FALSE)
 }
 \arguments{
   \item{workingDB}{if \code{TRUE} (the default) open a temporary working
@@ -109,6 +109,8 @@ fameWhat(dbKey, fname, getDoc = F)
   \item{accessMode}{a string specifying the access model to open the
 	database in: one of "read", "create", "overwrite", "update", or
 	"shared".} 
+  \item{stopOnFail}{should the function \code{stop()} if the database
+	cannot be opened? Also, see the return value below.}
   \item{dbKey}{integer returned by \code{dbOpen}}
   \item{db}{can take \code{dbKey} or \code{dbName} form; that is, it can
 	be an integer returned by \code{dbOpen}, or it can be the name of a
@@ -135,7 +137,10 @@ fameWhat(dbKey, fname, getDoc = F)
   
   \code{fameStatusMessage} returns a message string.
 
-  \code{fameDbOpen} returns an integer \code{dbKey}.
+  \code{fameDbOpen} returns an integer \code{dbKey}.  If the parameter
+  \code{stopOnFail} is \code{FALSE} and the open does not succeed, the
+  returned integer is -1 and it will have attributes "status" and
+  "statusMessage" indicating the nature of the failure.
 
   \code{fameDbClose} returns a status code.
 

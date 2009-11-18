@@ -26,12 +26,12 @@
 
 }
 \usage{
-getfame(sernames, db, save = F, envir = parent.frame(),
-        start = NULL, end = NULL, getDoc = T)
-putfame(serlist, db, access = "shared", update = T,
-        checkBasisAndObserved = F, envir = parent.frame()) 
-fameWhats(db, fname, getDoc = T)
-fameWildlist(db, wildString = "?", nMax = 1000, charMode = T)
+getfame(sernames, db, save = FALSE, envir = parent.frame(),
+        start = NULL, end = NULL, getDoc = TRUE)
+putfame(serlist, db, access = "shared", update = TRUE,
+        checkBasisAndObserved = FALSE, envir = parent.frame()) 
+fameWhats(db, fname, getDoc = TRUE)
+fameWildlist(db, wildString = "?", nMax = 1000, charMode = TRUE)
 }
 \arguments{
   \item{sernames}{
@@ -43,12 +43,12 @@ fameWildlist(db, wildString = "?", nMax = 1000, charMode = T)
     will be called on this argument to obtain a path.
   }
   \item{save}{
-    if \code{T} the retrieved series are individually saved in the
+    if \code{TRUE} the retrieved series are individually saved in the
     environment specified by \code{envir}.
   }
   \item{envir}{
     for \code{getfame}, the environment used by \code{assign} to save
-    the retrieved series if \code{save} is \code{T}.  For
+    the retrieved series if \code{save} is \code{TRUE}.  For
     \code{putfame}, if \code{serlist} is a character vector, the
     environment in which to find the series that will be stored in the
     database.  The default environment for both functions is the frame

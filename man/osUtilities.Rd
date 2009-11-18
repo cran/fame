@@ -16,6 +16,4 @@ user()
 runningLinux()
 runningWindows()
 }
-\arguments{
-}
 \keyword{utilities}

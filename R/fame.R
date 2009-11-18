@@ -22,7 +22,7 @@ fameRunning <- function(){
 
 fameStop <- function(){
   if(fameState() %in% c("starting", "running")){
-    fameCommand("exit", silent = T)
+    fameCommand("exit", silent = TRUE)
     status <- .C("fameStop", status = integer(1), PACKAGE = "fame")$status
     if(status == 2) setFameState("none") ## HLI was not initialized
     else            setFameState("dead")
@@ -32,14 +32,14 @@ fameStop <- function(){
   else warning("No fame process to stop")
 }
 
-fameCommand <- function(string, silent = T, capture = F){
+fameCommand <- function(string, silent = TRUE, capture = FALSE){
   if(capture){
     tfile <- paste(tempfile(), ".txt", sep = "")
-    on.exit(file.remove(tfile), add = T)
+    on.exit(file.remove(tfile), add = TRUE)
     fameCommand(paste('output <access overwrite> "',
-                      tfile, '"', sep = ""), capture = F)
-    status <- fameCommand(string, silent = silent, capture = F)
-    fameCommand('output terminal', silent = T, capture = F)
+                      tfile, '"', sep = ""), capture = FALSE)
+    status <- fameCommand(string, silent = silent, capture = FALSE)
+    fameCommand('output terminal', silent = TRUE, capture = FALSE)
     strings <- readLines(tfile)
     attr(strings, "status") <- status
     return(strings)
@@ -119,15 +119,23 @@ fameModeInt <- function(string){
     return(as.integer(modeNumber))
 }
 
-fameDbOpen <- function(dbName, accessMode = "read"){
+fameDbOpen <- function(dbName, accessMode = "read", stopOnFail = TRUE){
   boink <- .C("fameOpenDatabase", 
               status = integer(1),
               key = integer(1),
               dbName = as.character(dbName),
               mode = fameModeInt(accessMode),
               PACKAGE = "fame")
-  if(boink$status != 0) stop(fameStatusMessage(boink$status))
-  return(boink$key)
+  key <- boink$key
+  if(boink$status != 0){
+    msg <- fameStatusMessage(boink$status)
+    if(stopOnFail) stop(msg)
+    else {
+      attr(key, "status") <- boink$status
+      attr(key, "statusMessage") <- msg
+    }
+  }
+  return(key)
 }
 
 fameDbClose <- function(dbKey){
@@ -187,9 +195,9 @@ isScalarOrTis <- function(x){
 }
 
 
-getfame <- function(sernames, db, save = F, envir = parent.frame(),
-                    start = NULL, end = NULL, getDoc = T){
-  ## If save = T, the series found are saved in envir using rnames
+getfame <- function(sernames, db, save = FALSE, envir = parent.frame(),
+                    start = NULL, end = NULL, getDoc = TRUE){
+  ## If save = TRUE, the series found are saved in envir using rnames
   ## find path to db
   dbPath <- getFamePath(db)
   if(is.null(dbPath))
@@ -222,8 +230,8 @@ getfame <- function(sernames, db, save = F, envir = parent.frame(),
          ((class == fameClasses["formula"]) |
           (class == fameClasses["scalar"])))){
     fameCommand(paste('open <access read> "', dbPath, '" as ', dbName, sep = ''),
-                silent = T)
-    on.exit(fameCommand(paste('close', dbName), silent = T), add = T)
+                silent = TRUE)
+    on.exit(fameCommand(paste('close', dbName), silent = TRUE), add = TRUE)
     fameCommand('image date value "<year><mz><dz>:<hhz>:<mmz>:<ssz>"')
     fameCommand('image boolean auto')
     fameCommand('decimal auto')
@@ -236,7 +244,7 @@ getfame <- function(sernames, db, save = F, envir = parent.frame(),
 
     if(atts$status == 0){
       if(atts$class == fameClasses["scalar"]){
-        retItem <- fameCommand(paste("type", sername), capture = T)
+        retItem <- fameCommand(paste("type", sername), capture = TRUE)
         if(attr(retItem, "status") != 0){
           cat("Problem reading", sername, "\n")
           retItem <- list()
@@ -260,9 +268,14 @@ getfame <- function(sernames, db, save = F, envir = parent.frame(),
       else {
         if(atts$class == fameClasses["formula"]){
           fameCommand(paste("-/", sername, " = ", dbName, "'", sername, sep = ""),
-                      silent = T)
+                      silent = TRUE)
           ## dbKey for work database is always 0
+          fAtts <- atts
           atts <- fameWhat(0, sernames[i], getDoc)
+          if(getDoc){
+            if(fAtts$des != "") atts$des <- fAtts$des
+            if(fAtts$doc != "") atts$doc <- fAtts$doc
+          }
         }
 
         if(atts$status != 0){
@@ -404,8 +417,8 @@ getfame <- function(sernames, db, save = F, envir = parent.frame(),
 
 putfame <- function(serlist, db,
                     access = "shared",
-                    update = T,
-                    checkBasisAndObserved = F,
+                    update = TRUE,
+                    checkBasisAndObserved = FALSE,
                     envir = parent.frame()){
   dbPath <- getFamePath(db)
   if(is.null(dbPath)) dbPath <- db
@@ -496,7 +509,7 @@ putfame <- function(serlist, db,
   
   if(any(scalar)){ ## write the scalars out first
     fameCommand(paste('open <access ', access, '> "', dbPath,
-                      '" as targetdb', sep = ''), silent = T)
+                      '" as targetdb', sep = ''), silent = TRUE)
     for(i in scalarIndex)
       fameWriteScalar(dbPath, znames[i], z[[i]], update = update)
     fameCommand('close targetdb')
@@ -512,7 +525,7 @@ putfame <- function(serlist, db,
   }
 }
 
-fameWriteScalar <- function(dbPath, fname, scalar, update = T){
+fameWriteScalar <- function(dbPath, fname, scalar, update = TRUE){
   ## if update is FALSE or there is no existing object named 'fname', put
   ## overwrite on to force creation of a new object along with any documentation
   ## and description attributes.
@@ -537,9 +550,9 @@ fameWriteScalar <- function(dbPath, fname, scalar, update = T){
     cmd <- paste("update !targetdb'", fname, " =", sep = "")
   }
   else {
-    overwriteState <- fameCommand("type @overwrite", capture = T)
+    overwriteState <- fameCommand("type @overwrite", capture = TRUE)
     fameCommand("overwrite TRUE")
-    on.exit(fameCommand(paste("overwrite", overwriteState)), add = T)
+    on.exit(fameCommand(paste("overwrite", overwriteState)), add = TRUE)
     cmd <- paste("scalar !targetdb'", fname, ":", type, " =", sep = "") 
   }
 
@@ -557,7 +570,7 @@ fameWriteScalar <- function(dbPath, fname, scalar, update = T){
          string = {
            fameCommand(paste(cmd, " \"", scalar, "\"", sep = ""))
          })
-  if(nFound == 0 || update == F){
+  if(nFound == 0 || update == FALSE){
     if(!is.null(desc <- description(scalar)))
       fameCommand(paste("description(", fname, ") = \"", desc, "\"", sep = ""))
     if(!is.null(doc <- documentation(scalar)))
@@ -565,20 +578,20 @@ fameWriteScalar <- function(dbPath, fname, scalar, update = T){
   }
 }
 
-fameWriteSeries <- function(dbKey, fname, ser, update = F,
-                              checkBasisAndObserved = F){
+fameWriteSeries <- function(dbKey, fname, ser, update = FALSE,
+                              checkBasisAndObserved = FALSE){
   ## Write the tis (TimeIndexedSeries) ser as fname in the database given by dbKey.
-  ## If an object named fname already exists in the database and update == T,
+  ## If an object named fname already exists in the database and update == TRUE,
   ## the frequency, observed, and basis attributes of ser are checked for
   ## consistency with the existing object, then the range covered by ser is
-  ## written to the database.  If update == F, any existing series called fname
+  ## written to the database.  If update == FALSE, any existing series called fname
   ## will be deleted before writing ser to the database.
   if(!inherits(ser, "tis")) stop("not a time indexed series")
   if(!is.null(nc <- ncol(ser)) && !is.na(nc) && nc != 1)
     stop("not a univariate series")
   
   ## see if ser is already in the database and get info about it
-  wl <- fameWildlist(dbKey, wildString = fname, nMax = 2, charMode = F)
+  wl <- fameWildlist(dbKey, wildString = fname, nMax = 2, charMode = FALSE)
   nFound <- length(wl[[1]])
   if(nFound > 1) stop("found multiple objects with same name")
 
@@ -621,7 +634,7 @@ fameWriteSeries <- function(dbKey, fname, ser, update = F,
           data        = as.numeric(ser),
           update      = as.integer(update),
           checkBasisAndObserved = as.integer(checkBasisAndObserved),  
-          NAOK = T,
+          NAOK = TRUE,
           PACKAGE = "fame")
   status <- z$status
   if(status != 0) cat(fameStatusMessage(status))
@@ -698,7 +711,7 @@ fameRange <- function(freq, startYear = -1, startPeriod = -1,
 }
 
 
-fameWhat <- function(dbKey, fname, getDoc = F){
+fameWhat <- function(dbKey, fname, getDoc = FALSE){
   getDoc <- as.integer(as.logical(getDoc))
   ## read low-level information about an object in a Fame database
   z <- .C("fameWhat",
@@ -728,7 +741,7 @@ fameWhat <- function(dbKey, fname, getDoc = F){
   z
 }
 
-fameWhats <- function(db, fname, getDoc = T){
+fameWhats <- function(db, fname, getDoc = TRUE){
   if(length(db) == 1 && is.numeric(db)){
     ## db is presumably the key to an already-open database
     dbKey <- db
@@ -770,7 +783,7 @@ fameWhats <- function(db, fname, getDoc = T){
   zz
 }
 
-fameWildlist <- function(db, wildString = "?", nMax = 1000, charMode = T){
+fameWildlist <- function(db, wildString = "?", nMax = 1000, charMode = TRUE){
   ## returns a list giving the name, class, type, and frequency of the objects
   ## in db with names that match wildString
   if(length(db) == 1 && is.numeric(db)){
@@ -867,7 +880,7 @@ getFameAttribute <- function(attribute, fname, db){
   if(fameCommand(openCommand) != 0) stop("couldn't open db")
   on.exit(fameCommand("close blah"))
   
-  strings <- fameCommand(attrCommand, silent = T, capture = T)
+  strings <- fameCommand(attrCommand, silent = TRUE, capture = TRUE)
   status <- attr(strings, "status")
   if(status != 0) stop(paste("bad status", status, "returned by", attrCommand))
   retval <- tolower(strings[strings != ""])

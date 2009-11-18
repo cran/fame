@@ -2,46 +2,46 @@
    It is only needed for the WINDOWS build process and does not need to be
    installed since the Window .onLoad() function picks up the real chli.dll. */
    
-dummyFunctionToAvoidEmptySourceFileWarning() { return -999999;}
+void dummyFunctionToAvoidEmptySourceFileWarning() { return;}
 #ifdef DUMMY_CALLS
 
-cfmcldb() { return -999999;}
-cfmdlo() { return -999999;}
-cfmdlob() { return -999999;}
-cfmfame() { return -999999;}
-cfmferr() { return -999999;}
-cfminwc() { return -999999;}
-cfmopdb() { return -999999;}
-cfmnwob() { return -999999;}
-cfmnxwc() { return -999999;}
-cfmrmev() { return -999999;}
-cfmrnob() { return -999999;}
-cfmrrng_f() { return -999999;}
-cfmsbm() { return -999999;}
-cfmsdes() { return -999999;}
-cfmsdoc() { return -999999;}
-cfmsnm() { return -999999;}
-cfmspm() { return -999999;}
-cfmsrng() { return -999999;}
-cfmtody() { return -999999;}
-cfmwhat() { return -999999;}
-cfmwrng_f() { return -999999;}
-cfmgtsts() { return -999999;}
-cfmlsts() { return -999999;}
-cfmdatd() { return -999999;}
-cfmddat() { return -999999;}
-cfmfin() { return -999999;}
-cfmini() { return -999999;}
-cfmopwk() { return -999999;}
+void cfmcldb()   { return;}
+void cfmdlo()    { return;}
+void cfmdlob()   { return;}
+void cfmfame()   { return;}
+void cfmferr()   { return;}
+void cfminwc()   { return;}
+void cfmopdb()   { return;}
+void cfmnwob()   { return;}
+void cfmnxwc()   { return;}
+void cfmrmev()   { return;}
+void cfmrnob()   { return;}
+void cfmrrng_f() { return;}
+void cfmsbm()    { return;}
+void cfmsdes()   { return;}
+void cfmsdoc()   { return;}
+void cfmsnm()    { return;}
+void cfmspm()    { return;}
+void cfmsrng()   { return;}
+void cfmtody()   { return;}
+void cfmwhat()   { return;}
+void cfmwrng_f() { return;}
+void cfmgtsts()  { return;}
+void cfmlsts()   { return;}
+void cfmdatd()   { return;}
+void cfmddat()   { return;}
+void cfmfin()    { return;}
+void cfmini()    { return;}
+void cfmopwk()   { return;}
 
-FNUMNA() { return 0;}
-FNUMNC() { return 0;}
-FNUMND() { return 0;}
-FBOONA() { return 0;}
-FBOONC() { return 0;}
-FBOOND() { return 0;}
-FPRCNA() { return 0;}
-FPRCNC() { return 0;}
-FPRCND() { return 0;}
+float FNUMNA() { return 0;}
+float FNUMNC() { return 0;}
+float FNUMND() { return 0;}
+int FBOONA() { return 0;}
+int FBOONC() { return 0;}
+int FBOOND() { return 0;}
+double FPRCNA() { return 0;}
+double FPRCNC() { return 0;}
+double FPRCND() { return 0;}
 
 #endif
