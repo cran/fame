@@ -1,3 +1,9 @@
+Changes in Version 2.10
+
+  o export getFamePath()
+
+  o support for user-defined attributes
+
 Changes in Version 2.9
 
   o should now work with Fame 'master/dbback' Fame servers. 

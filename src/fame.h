@@ -45,7 +45,9 @@ extern DLLENTRY int   FBOOND ;		/* BOOLEAN ND	*/
 
 #define A(x)	x
 
+DLLENTRY void cfmclcn  A((int *, int));
 DLLENTRY void cfmcldb  A((int *, int));
+DLLENTRY void cfmgcid  A((int *, int, int *));
 DLLENTRY void cfmdatd  A((int *, int, int, int *, int *, int *));
 DLLENTRY void cfmddat  A((int *, int, int *, int, int, int));
 DLLENTRY void cfmdlob  A((int *, int, char *));
@@ -60,7 +62,9 @@ DLLENTRY void cfmlsts  A((int *, int, char *, const int *, int *));
 DLLENTRY void cfmnwob  A((int *, int, char *, int, int, int, int, int));
 DLLENTRY void cfmnxwc  A((int *, int, char *, int *, int *, int *));
 DLLENTRY void cfmopwk  A((int *, int *));
+DLLENTRY void cfmopcn  A((int *, int *, char *, char *, char *, char *));
 DLLENTRY void cfmopdb  A((int *, int *, char *, int));
+DLLENTRY void cfmopdc  A((int *, int *, char *, int, int));
 DLLENTRY void cfmrmev  A((int *, int, char *, char *, int , char *));
 DLLENTRY void cfmrnob  A((int *, int, char *, char *));
 DLLENTRY void cfmsbm   A((int *, int, int, int, int *));

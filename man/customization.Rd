@@ -13,14 +13,6 @@
   \code{fameLocalInit} exists.  If so, it is called with no arguments
   immediately after opening the work database. 
 
-  \code{fameLocalPath}: The functions \code{getfame}, \code{putfame},
-  \code{fameWhats} and \code{fameWildlist} all take a string \code{db}
-  argument to specify the database to open. The string is fed to the
-  internal function \code{getFamePath} to find the database. If a
-  function called \code{fameLocalPath} exists, \code{dbString} is
-  checked against the value returned by \code{fameLocalPath(dbString)}.
-  If they are not the same, the latter is returned.  Otherwise, the
-  function returns \code{dbString} if it is a valid path to an existing
-  readable file, or \code{NULL} if it is not. 
+  \code{fameLocalPath}: Used to customize \code{\link{getFamePath}}. 
 }  
 \keyword{ database }

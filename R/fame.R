@@ -5,11 +5,11 @@
 
 fameState <- function(){
   if(!exists(".fameState", envir = baseenv()))
-    setFameState("none")
+    fameSetState("none")
   get(".fameState", pos = baseenv())
 }
 
-setFameState <- function(value){
+fameSetState <- function(value){
   if(!value %in% c("none", "starting", "running", "dead"))
     stop("Bad value for fameState")
   assign(".fameState", value, pos = baseenv())
@@ -24,8 +24,8 @@ fameStop <- function(){
   if(fameState() %in% c("starting", "running")){
     fameCommand("exit", silent = TRUE)
     status <- .C("fameStop", status = integer(1), PACKAGE = "fame")$status
-    if(status == 2) setFameState("none") ## HLI was not initialized
-    else            setFameState("dead")
+    if(status == 2) fameSetState("none") ## HLI was not initialized
+    else            fameSetState("dead")
     if(status != 0)
       stop(fameStatusMessage(status))
   }
@@ -78,10 +78,10 @@ fameStart <- function(workingDB = TRUE){
       stop("HLI functions from chli.dll not found")
     
     status <- .C("fameInit", status = integer(1), PACKAGE = "fame")$status
-    if(status == 3) setFameState("dead")
+    if(status == 3) fameSetState("dead")
     if(status != 0 && status != 1) stop(fameStatusMessage(status))
     
-    setFameState("starting")
+    fameSetState("starting")
   }
   
   if(workingDB){
@@ -108,9 +108,9 @@ fameStart <- function(workingDB = TRUE){
   if(exists("fameLocalInit", mode = "function"))
     get("fameLocalInit", pos=1)()
   
-  setFameState("running")
+  fameSetState("running")
 }
-  
+
 fameModeInt <- function(string){
   modes <- c(read = 1, create = 2, overwrite = 3, update = 4,
              shared = 5, write = 6, direct = 7)
@@ -120,13 +120,63 @@ fameModeInt <- function(string){
     return(as.integer(modeNumber))
 }
 
-fameDbOpen <- function(dbName, accessMode = "read", stopOnFail = TRUE){
-  boink <- .C("fameOpenDatabase", 
-              status = integer(1),
-              key = integer(1),
-              dbName = as.character(dbName),
-              mode = fameModeInt(accessMode),
-              PACKAGE = "fame")
+fameConnection <- function(service = " ", host = " ", user = " ",
+                           password = " ", stopOnFail = TRUE){
+  ## make sure a Fame server session is running
+  if(!fameRunning()) fameStart()
+  
+  z <- .C("fameOpenConnection",
+          status   = integer(1),
+          key      = integer(1),
+          service  = as.character(service),
+          host     = as.character(host),
+          user     = as.character(user),
+          password = as.character(password),
+          PACKAGE  = "fame")
+  if(z$status != 0){
+    msg <- fameStatusMessage(z$status)
+    if(stopOnFail) stop(msg)
+  }
+  key <- z$key
+  keyAtts <- z[c("service", "host", "user", "password")]
+  attributes(key) <- keyAtts[unlist(keyAtts) != " "]
+  class(key) = "fameConnection"
+  key
+}
+
+print.fameConnection <- function(x, ...){
+  atts <- attributes(x)
+  atts$class <- NULL
+  atts$key <- unclass(x)
+  print(noquote(cbind(fameConnection = unlist(atts))), ...)
+}
+
+close.fameConnection <- function(con, ...){
+  ## Has to have argument named "con" because the generic function does
+  status <- .C("fameCloseConnection", status = integer(1),
+               key = as.integer(con), PACKAGE = "fame")$status
+  if(status != 0 && status != 2)
+    cat(fameStatusMessage(status), "\n")
+}
+
+fameDbOpen <- function(dbName, accessMode = "read", connection = NULL,
+                       stopOnFail = TRUE){
+  if(is.null(connection))
+    boink <- .C("fameOpenDatabase", 
+                status = integer(1),
+                key = integer(1),
+                dbName = as.character(dbName),
+                mode = fameModeInt(accessMode),
+                PACKAGE = "fame")
+  else {
+    boink <- .C("fameOpenDatabaseOnConnection", 
+                status = integer(1),
+                key = integer(1),
+                dbName = as.character(dbName),
+                mode = fameModeInt(accessMode),
+                conn = as.integer(connection),
+                PACKAGE = "fame")
+  }
   key <- boink$key
   if(boink$status != 0){
     msg <- fameStatusMessage(boink$status)
@@ -140,11 +190,36 @@ fameDbOpen <- function(dbName, accessMode = "read", stopOnFail = TRUE){
   return(key)
 }
 
-fameDbClose <- function(dbKey){
+fameConnKeyForDb <- function(dbKey){
+  boink <- .C("fameConnForDbKey",
+              status = integer(1),
+              dbKey = as.integer(dbKey),
+              connKey = integer(1),
+              PACKAGE = "fame")
+  if(boink$status == 103){
+    ## "database is not open on a connection"
+    return(NULL)
+  }
+  else {
+    if(boink$status != 0)
+      stop(fameStatusMessage(boink$status))
+    else {
+      key <- boink$connKey
+      class(key) <- "fameConnection"
+      return(key)
+    }
+  }
+}
+
+fameDbClose <- function(dbKey, closeConnection = TRUE){
+  if(closeConnection) conn <- fameConnKeyForDb(dbKey)
+  else                conn <- NULL
   status <- .C("fameCloseDatabase", status = integer(1),
                dbKey = as.integer(dbKey), PACKAGE = "fame")$status
   if(status != 0 && status != 2)
     cat(fameStatusMessage(status), "\n")
+  else
+    if(!is.null(conn)) close(conn)
 }
 
 fameDeleteObject <- function(db, fname){
@@ -154,7 +229,6 @@ fameDeleteObject <- function(db, fname){
   }
   else {
     dbPath <- getFamePath(db)
-    if(is.null(dbPath)) stop(paste("cannot read", db))
     ## make sure a Fame server session is running
     if(!fameRunning()) fameStart()
     ## open database
@@ -168,61 +242,62 @@ fameDeleteObject <- function(db, fname){
      PACKAGE = "fame")$status
 }
 
-getFamePath <- function(dbString){
+getFamePath <- function(dbString, stopOnFail = TRUE){
   ## define fameLocalPath if you have a way to find the path to a database 
   ## return NULL if database corresponding to dbString could not be found
-  if(exists("fameLocalPath", mode = "function")){
+  if(exists("fameLocalPath", mode = "function"))
     path <- get("fameLocalPath", pos=1)(dbString)
-    if(path != dbString) return(path)
-  }
-  else path <- dbString
+  else
+    path <- dbString
 
   ## Now see if the path exists or may be a server path
-  if(file.access(path, 4) == 0)  ## is readable
-    return(path)
-  else {
-    if(file.access(path, 0) == 0){
-      cat("File", path, "exists, but cannot be read\n")
-      return(NULL)
-    }
-    else {
-      if(mightBeFameServer(path)){
-        cat("'", path, "' may be a Fame Server path.\n", sep = "")
-        return(path)
-      }
-      else {
-        cat("Could not find", path, "\n")
-        return(NULL)
-      }
-    }
+  failed <- TRUE
+  if(file.access(path, 0) == 0){ ## testing existence
+    if(file.access(path, 4) == 0)
+      failed <- FALSE
+    else
+      msg <- paste("File", path, "exists, but is not readable.")
   }
+  else {  ## file doesn't exist
+    if(mightBeFameServer(path)){
+      failed <- FALSE
+      cat("Assuming '", path, "' is a Fame Server path due to white space.\n", sep = "")
+    }
+    else msg <- paste("Could not find ", path, ".")
+  }
+  if(failed){
+    if(stopOnFail) stop(msg)
+    else           cat(msg, "\n")
+  }
+  attr(path, "status") <- as.numeric(failed)
+  return(path)
 }
+  
 
 mightBeFameServer <- function(path){
-  grepl("\\w[[:blank:]]+\\w", path)
+  ## check for at least one blank of some kind between nonblanks
+  grepl("[^[:blank:]][[:blank:]]+[^[:blank:]]", path)
 }
 
-isFameScalar <- function(x){
+fameIsScalar <- function(x){
   !(is.tis(x) || is.ts(x)) && is.atomic(x) && length(x) == 1
 }
 
 isScalarOrTis <- function(x){
-  is.tis(x) || isFameScalar(x)
+  is.tis(x) || fameIsScalar(x)
 }
 
-getfame <- function(sernames, db, save = FALSE, envir = parent.frame(),
-                    start = NULL, end = NULL, getDoc = TRUE){
+getfame <- function(sernames, db, connection = NULL, save = FALSE,
+                    envir = parent.frame(), start = NULL, end = NULL, getDoc = TRUE){
   ## If save = TRUE, the series found are saved in envir using rnames
-  ## find path to db
-  dbPath <- getFamePath(db)
-  if(is.null(dbPath))
-    stop(paste("cannot read", db))
-  
+  if(is.null(connection)) dbPath <- getFamePath(db)
+  else                    dbPath <- db
+
   ## make sure a Fame server session is running
   if(!fameRunning()) fameStart()
-
+  
   ## open database
-  dbKey <- fameDbOpen(dbPath)
+  dbKey <- fameDbOpen(dbPath, connection = connection)
   on.exit(fameDbClose(dbKey))
   
   n <- length(sernames)
@@ -243,8 +318,27 @@ getfame <- function(sernames, db, save = FALSE, envir = parent.frame(),
   if(any((status == 0) &
          ((class == fameClasses["formula"]) |
           (class == fameClasses["scalar"])))){
-    fameCommand(paste('open <access read> "', dbPath, '" as ', dbName, sep = ''),
-                silent = TRUE)
+    
+    openCmd <- paste('open <access read> "', dbPath, '" as ', dbName, sep = '')
+
+    if(!is.null(connection)){
+      connCmd <- "connect"
+      service  <- attr(connection, "service")
+      host     <- attr(connection, "host")
+      username <- attr(connection, "user")
+      password <- attr(connection, "password")
+      
+      if(!is.null(service))  connCmd <- paste(connCmd, "to", service)
+      if(!is.null(host))     connCmd <- paste(connCmd, "on", host)
+      connCmd <- paste(connCmd, "as Rconn")
+      if(!is.null(username)) connCmd <- paste(connCmd, "user", username)
+      if(!is.null(password)) connCmd <- paste(connCmd, "password", password)
+      
+      fameCommand(connCmd, silent = TRUE)
+      on.exit(fameCommand("disconnect Rconn"), add = TRUE)
+      openCmd <- paste(openCmd, "on Rconn")
+    }
+    fameCommand(openCmd, silent = TRUE)
     on.exit(fameCommand(paste('close', dbName), silent = TRUE), add = TRUE)
     fameCommand('image date value "<year><mz><dz>:<hhz>:<mmz>:<ssz>"')
     fameCommand('image boolean auto')
@@ -434,8 +528,7 @@ putfame <- function(serlist, db,
                     update = TRUE,
                     checkBasisAndObserved = FALSE,
                     envir = parent.frame()){
-  dbPath <- getFamePath(db)
-  if(is.null(dbPath)) dbPath <- db
+  dbPath <- getFamePath(db, stopOnFail = FALSE)
   
   if(access == "append"){
     ## for compatibility with old ffi version of putfame
@@ -507,7 +600,7 @@ putfame <- function(serlist, db,
   }
 
   ## find scalar and series elements in z 
-  scalar <- sapply(z, isFameScalar)
+  scalar <- sapply(z, fameIsScalar)
   scalarIndex <- (1:length(z))[scalar]
   seriesIndex <- (1:length(z))[!scalar]
   
@@ -593,7 +686,7 @@ fameWriteScalar <- function(dbPath, fname, scalar, update = TRUE){
 }
 
 fameWriteSeries <- function(dbKey, fname, ser, update = FALSE,
-                              checkBasisAndObserved = FALSE){
+                            checkBasisAndObserved = FALSE){
   ## Write the tis (TimeIndexedSeries) ser as fname in the database given by dbKey.
   ## If an object named fname already exists in the database and update == TRUE,
   ## the frequency, observed, and basis attributes of ser are checked for
@@ -751,29 +844,30 @@ fameWhat <- function(dbKey, fname, getDoc = FALSE){
     z$doc <- stripBlanks(z$doc)
     deslen <- nchar(z$des)
     doclen <- nchar(z$doc)
-    if(deslen > 250 || doclen > 250 && !is.null(path <- attr(dbKey, "path"))){
+    if(deslen > 250 || doclen > 250 && !is.null(db <- attr(dbKey, "path"))){
       if(deslen > 250)
-        z$des <- as.vector(unlist(getFameAttribute("description", fname,   path = path)))
+        z$des <- as.vector(unlist(fameAttribute("description",   fname, db)))
       if(doclen > 250)
-        z$doc <- as.vector(unlist(getFameAttribute("documentation", fname, path = path)))
+        z$doc <- as.vector(unlist(fameAttribute("documentation", fname, db)))
     }
   }
   else z$des <- z$doc <- character(0)
   z
 }
 
-fameWhats <- function(db, fname, getDoc = TRUE){
+fameWhats <- function(db, fname, connection = NULL, getDoc = TRUE){
   if(length(db) == 1 && is.numeric(db)){
     ## db is presumably the key to an already-open database
     dbKey <- db
   }
   else {
-    dbPath <- getFamePath(db)
-    if(is.null(dbPath)) stop(paste("cannot read", db))
+    if(is.null(connection)) dbPath <- getFamePath(db)
+    else                    dbPath <- db
+    
     ## make sure a Fame server session is running
     if(!fameRunning()) fameStart()
     ## open database
-    dbKey <- as.integer(fameDbOpen(dbPath))
+    dbKey <- as.integer(fameDbOpen(dbPath, connection = connection))
     on.exit(fameDbClose(dbKey))
   }
   ## higher level (and slower) version of fameWhat()
@@ -804,7 +898,7 @@ fameWhats <- function(db, fname, getDoc = TRUE){
   zz
 }
 
-fameWildlist <- function(db, wildString = "?", nMax = 1000, charMode = TRUE){
+fameWildlist <- function(db, wildString = "?", connection = NULL, nMax = 1000, charMode = TRUE){
   ## returns a list giving the name, class, type, and frequency of the objects
   ## in db with names that match wildString
   if(length(db) == 1 && is.numeric(db)){
@@ -812,12 +906,13 @@ fameWildlist <- function(db, wildString = "?", nMax = 1000, charMode = TRUE){
     dbKey <- db
   }
   else {
-    dbPath <- getFamePath(db)
-    if(is.null(dbPath)) stop(paste("cannot read", db))
+    if(is.null(connection)) dbPath <- getFamePath(db)
+    else                    dbPath <- db
+    
     ## make sure a Fame server session is running
     if(!fameRunning()) fameStart()
     ## open database
-    dbKey <- as.integer(fameDbOpen(dbPath))
+    dbKey <- as.integer(fameDbOpen(dbPath, connection = connection))
     on.exit(fameDbClose(dbKey))
   }
 
@@ -888,29 +983,6 @@ fameWildlist <- function(db, wildString = "?", nMax = 1000, charMode = TRUE){
     z$freq[isCaseSeries] <- "case"
   }
   z
-}
-
-getFameAttribute <- function(attribute, fname, db = NULL, path = NULL){
-  if(is.null(path)) path <- getFamePath(db)
-  if(is.null(path)) stop(paste("cannot read", db))
-  if(!fameRunning()) fameStart()
-  
-  openCommand <- paste('open <access read> "', path, '" as blah', sep = "")
-  attrCommand <- paste("display ", attribute, "(", fname, ")", sep = "")
-  
-  if(fameCommand(openCommand) != 0) stop("couldn't open db")
-  on.exit(fameCommand("close blah"))
-  
-  strings <- fameCommand(attrCommand, silent = TRUE, capture = TRUE)
-  status <- attr(strings, "status")
-  if(status != 0) stop(paste("bad status", status, "returned by", attrCommand))
-  retval <- tolower(strings[strings != ""])
-  rvname <- retval[1]
-  retval <- retval[-1]
-  if(length(retval) > 1) 
-    retval <- list(retval)
-  names(retval) <- rvname
-  retval
 }
 
 fameStatusMessage <- function(code){
@@ -986,9 +1058,8 @@ fameStatusMessage <- function(code){
 	     "unexpectedly."),
 	 "62"  = paste("Access to a remote data base has been temporarily", 
 	     "suspended. Try again later."),
-	 "63"  = paste("Remote host does not support current intermachine", 
-	     "protocol version"),
-	 "64"  = "Remote host client limit exceeded.",
+	 "63"  = "The requested FRDB protocol is not supported by the server.", 
+	 "64"  = "Database server hard client limit exceeded.",
 	 "65"  = paste("Bad user name or password in file spec for remote", 
 	     "host, or client not authorized to use remote host"),
 	 "66"  = "Could not start server process on remote host",
@@ -1011,6 +1082,15 @@ fameStatusMessage <- function(code){
 	     "dbKey for a KIND REMOTE channel to the mcadbs server"),
 	 "77"  = "cfmopwk called when a work data base is already open",
 	 "78"  = "FRDB user license cannot be accquired.",
+     "90"  = "FRDB server soft client limit exceeded.",
+     "91"  = "FRDB server data base client limit exceeded.",
+     "92"  = "FRDB server system file table full",
+     "93"  = "FRDB server process has too many open files.",
+     "95"  = "FRDB server did not respond within the time limit.",
+     "101" = "A bad connection key was given.",
+     "102" = "Pending unit of work aborted.",
+     "103" = "Specified database key is not open on a connection.",
+     "110" = "The write server for the database is not running on this host.",
 	 "511" = "HLI internal failure.",
 	 "513" = paste("Error from a FAME-like server. Call cfmferr for the", 
 	     "text of the message HFAMER is > 512 for compatiblity with",
@@ -1021,6 +1101,6 @@ fameStatusMessage <- function(code){
 fameClasses   <- c(series = 1, scalar = 2, formula = 3)
 fameTypes     <- c(undefined = 0, numeric = 1, namelist = 2,
                    boolean = 3, string = 4, precision = 5, date = 6)
-  fameBasiss    <- c(undefined = 0, daily = 1, business = 2)
-  fameObserveds <- c(undefined = 0, beginning = 1, ending = 2, averaged = 3,
+fameBasiss    <- c(undefined = 0, daily = 1, business = 2)
+fameObserveds <- c(undefined = 0, beginning = 1, ending = 2, averaged = 3,
                    summed = 4, annualized = 5, formula = 6, high = 7, low = 8)

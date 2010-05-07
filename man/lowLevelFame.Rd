@@ -5,6 +5,7 @@
 \alias{fameState}
 \alias{fameCommand}
 \alias{fameStatusMessage}
+\alias{fameConnect}
 \alias{fameDbOpen}
 \alias{fameDbClose}
 \alias{fameDeleteObject}
@@ -54,6 +55,10 @@
   \code{fameStatusMessage} looks up and returns the error message
   associated with its argument.
 
+  \code{fameConnect} opens a connection to FAME Database Server (Master
+  or MCADBS), returning an integer \code{connKey} which is used by
+  \code{fameDbOpen} to open a database on that connection.
+
   \code{fameDbOpen} opens the named database in the given access mode.
   It returns an integer \code{dbKey}, which is a required argument for
   some of the other functions documented here.
@@ -91,8 +96,8 @@ fameStop()
 fameState()
 fameCommand(string, silent = TRUE, capture = FALSE)
 fameStatusMessage(code)
-fameDbOpen(dbName, accessMode = "read", stopOnFail = TRUE)
-fameDbClose(dbKey)
+fameDbOpen(dbName, accessMode = "read", connection = NULL, stopOnFail = TRUE)
+fameDbClose(dbKey, closeConnection = TRUE)
 fameDeleteObject(db, fname)
 fameWriteSeries(dbKey, fname, ser, update = FALSE, checkBasisAndObserved = FALSE)
 fameWhat(dbKey, fname, getDoc = FALSE)
@@ -109,9 +114,14 @@ fameWhat(dbKey, fname, getDoc = FALSE)
   \item{accessMode}{a string specifying the access model to open the
 	database in: one of "read", "create", "overwrite", "update", or
 	"shared".} 
+  \item{connection}{created by calling \code{\link{fameConnection}}. Leave this at the
+    default \code{NULL} setting for local databases.}
   \item{stopOnFail}{should the function \code{stop()} if the database
 	cannot be opened? Also, see the return value below.}
   \item{dbKey}{integer returned by \code{dbOpen}}
+  \item{closeConnection}{if \code{TRUE} (the default) close the
+  fameConnection associated with the database as well. This only applies
+  to databases that were opened on a connection, not to local databases.}
   \item{db}{can take \code{dbKey} or \code{dbName} form; that is, it can
 	be an integer returned by \code{dbOpen}, or it can be the name of a
 	database or path to a database.}

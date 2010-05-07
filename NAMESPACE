@@ -2,14 +2,20 @@ if(tools:::.OStype() == "unix"){
   useDynLib(fame)
 }
 
-export(fameCommand, fameDbClose, fameDbOpen, fameDeleteObject,
-       fameRunning, fameStart, fameStatusMessage, fameState, fameStop, fameWhat,
-       fameWhats, fameWildlist, fameWriteSeries, getfame, getFameAttribute, 
-       getFameCreated, getFameUpdated, isFameScalar, putfame, runningLinux,
-       runningWindows, tifToFameName, user)
+export(fameAddAttribute, fameAttribute, fameCommand, fameConnection,
+       fameDbClose, fameCreated, fameDbOpen,
+       fameDeleteObject, fameIsScalar, fameRunning, fameSetAttribute, fameStart,
+       fameStatusMessage, fameState, fameStop, fameUpdated, fameWhat,
+       fameWhats, fameWildlist, fameWriteSeries, getfame, getFamePath,
+       putfame, runningLinux, runningWindows, tifToFameName, user) 
+
+S3method("print", fameConnection)
+S3method("close", fameConnection)
 
 ## not exported
+## fameDbStatus, fameUserDefinedAttributes, fameSetDbAttributes,
 ## convertFreqCode, fameBasiss, fameClasses, fameDate, fameDateString,
-## fameDateToTi, fameObserveds, fameToTif, fameTypes, fameModeInt, fameRange,
-## fameYmd, getFamePath, isScalarOrTis, mightBeFameServer, setFameState
+## fameDateToTi, fameObserveds, fameSetState, fameToTif, fameTypes, fameModeInt, fameRange,
+## fameYmd, isScalarOrTis, mightBeFameServer
 
+ 

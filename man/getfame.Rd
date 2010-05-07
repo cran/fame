@@ -26,12 +26,12 @@
 
 }
 \usage{
-getfame(sernames, db, save = FALSE, envir = parent.frame(),
+getfame(sernames, db, connection = NULL, save = FALSE, envir = parent.frame(),
         start = NULL, end = NULL, getDoc = TRUE)
 putfame(serlist, db, access = "shared", update = TRUE,
         checkBasisAndObserved = FALSE, envir = parent.frame()) 
-fameWhats(db, fname, getDoc = TRUE)
-fameWildlist(db, wildString = "?", nMax = 1000, charMode = TRUE)
+fameWhats(db, fname, connection = NULL, getDoc = TRUE)
+fameWildlist(db, wildString = "?", connection = NULL, nMax = 1000, charMode = TRUE)
 }
 \arguments{
   \item{sernames}{
@@ -42,6 +42,10 @@ fameWildlist(db, wildString = "?", nMax = 1000, charMode = TRUE)
     or write from. If the \code{fameLocalPath()} function is defined, it
     will be called on this argument to obtain a path.  To open a remote
     database, use a string like "servername /path/to/a/database.db".
+  }
+  \item{connection}{
+    created by calling \code{\link{fameConnection}}. Leave this at the
+    default \code{NULL} setting for local databases.
   }
   \item{save}{
     if \code{TRUE} the retrieved series are individually saved in the
@@ -159,7 +163,7 @@ fameWildlist(db, wildString = "?", nMax = 1000, charMode = TRUE)
 }
 \note{
   These functions use the Fame HLI and a child server
-  process.  The function \code{fameRunning} is called to see if the
+  process. The function \code{fameRunning} is called to see if the
   server process is already running.  If not, \code{fameStart} starts it
   and the HLI.  Your .Last function should call \code{fameStop} to shut
   them down gracefully.  In any given R session, once the Fame HLI has
@@ -167,9 +171,11 @@ fameWildlist(db, wildString = "?", nMax = 1000, charMode = TRUE)
   limitation.  On exit, \code{getfame} always closes whatever databases
   it opened, so there's no reason not to just leave the server running
   as long as the R session is alive.  Death of the R process kills the
-  server process as well. 
+  server process as well.
+
+  Please note that the \code{fameConnection} functionality is not well-tested.
 }
-\seealso{ \code{\link[tis:ti]{ti}}, \code{\link[tis:tis]{tis}}}
+\seealso{ \code{\link[tis:ti]{ti}}, \code{\link[tis:tis]{tis}}, \code{\link{fameConnection}}}
 \examples{
 \dontrun{
 mydb <- "pathToMyDatabase"

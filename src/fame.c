@@ -44,8 +44,29 @@ void fameCommand(int *status, char **command, char **errorMsg){
   return;
 }
 
+void fameOpenConnection(int *status, int *conn, char **service,
+						char **hostname, char **username, char **password){
+  cfmopcn(status, conn, *service, *hostname, *username, *password);
+  return;
+}
+
+void fameCloseConnection(int *status, int *conn){
+  cfmclcn(status, *conn);
+  return;
+}
+
+void fameConnForDbKey(int *status, int *key, int *conn){
+  cfmgcid(status, *key, conn);
+  return;
+}
+
 void fameOpenDatabase(int *status, int *key, char **name, int *mode){
   cfmopdb(status, key, *name, *mode);
+  return;
+}
+
+void fameOpenDatabaseOnConnection(int *status, int *key, char **name, int *mode, int *conn){
+  cfmopdc(status, key, *name, *mode, *conn);
   return;
 }
 

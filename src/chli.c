@@ -11,7 +11,11 @@ void cfmdlob()   { return;}
 void cfmfame()   { return;}
 void cfmferr()   { return;}
 void cfminwc()   { return;}
+void cfmopcn()   { return;}
+void cfmclcn()   { return;}
+void cfmgcid()   { return;}
 void cfmopdb()   { return;}
+void cfmopdc()   { return;}
 void cfmnwob()   { return;}
 void cfmnxwc()   { return;}
 void cfmrmev()   { return;}
