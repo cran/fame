@@ -11,5 +11,5 @@ export(fameCommand, fameDbClose, fameDbOpen, fameDeleteObject,
 ## not exported
 ## convertFreqCode, fameBasiss, fameClasses, fameDate, fameDateString,
 ## fameDateToTi, fameObserveds, fameToTif, fameTypes, fameModeInt, fameRange,
-## fameYmd, getFamePath, isScalarOrTis, setFameState
+## fameYmd, getFamePath, isScalarOrTis, mightBeFameServer, setFameState
 

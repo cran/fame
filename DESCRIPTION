@@ -1,12 +1,12 @@
 Package: fame
-Version: 2.7
-Date: 2009-11-18
+Version: 2.9
+Date: 2010-05-07
 Title: Interface for FAME time series database
 Author: Jeff Hallman <jhallman@frb.gov>
 Maintainer: Jeff Hallman <jhallman@frb.gov>
 Depends: R (>= 2.3), tis
 Description: Read and write FAME databases.
 License: Unlimited
-Packaged: 2009-11-18 18:26:00 UTC; m1jjh00
+Packaged: 2010-05-07 16:17:18 UTC; m1jjh00
 Repository: CRAN
-Date/Publication: 2009-11-19 13:00:41
+Date/Publication: 2010-05-08 07:06:02

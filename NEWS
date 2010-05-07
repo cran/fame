@@ -1,3 +1,12 @@
+Changes in Version 2.9
+
+  o should now work with Fame 'master/dbback' Fame servers. 
+
+Changes in Version 2.8
+
+  o functions fameWhat, fameWhats and getfame return then entire documentation and
+    description attributes, not just the first 256 characters.
+
 Changes in Version 2.7
 
   o Thanks to Paul Gilbert (with an assist from Duncan Murdoch) for coming up

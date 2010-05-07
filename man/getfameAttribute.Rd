@@ -11,7 +11,7 @@
   \code{POSIXlt} dates.
 }
 \usage{
-getFameAttribute(attribute, fname, db)
+getFameAttribute(attribute, fname, db = NULL, path = NULL)
 getFameCreated(fname, db)
 getFameUpdated(fname, db)
 }
@@ -24,6 +24,11 @@ getFameUpdated(fname, db)
     string giving the relative or full path to the Fame database to read
     or write from. If the \code{fameLocalPath()} function is defined, it
     will be called on this argument to obtain a path.
+  }
+  \item{path}{
+    string giving the relative or full path to the Fame database to read
+    or write from. If this argument is not \code{NULL}, the \code{db} argument is
+    ignored and \code{fameLocalPath()} is not called.
   }
 }
 \value{

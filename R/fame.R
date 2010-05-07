@@ -112,7 +112,8 @@ fameStart <- function(workingDB = TRUE){
 }
   
 fameModeInt <- function(string){
-  modes <- c(read = 1, create = 2, overwrite = 3, update = 4, shared = 5)
+  modes <- c(read = 1, create = 2, overwrite = 3, update = 4,
+             shared = 5, write = 6, direct = 7)
   if(is.na(modeNumber <- modes[string]))
     stop("Unknown access.mode")
   else
@@ -135,6 +136,7 @@ fameDbOpen <- function(dbName, accessMode = "read", stopOnFail = TRUE){
       attr(key, "statusMessage") <- msg
     }
   }
+  attr(key, "path") <- as.character(dbName)
   return(key)
 }
 
@@ -174,16 +176,30 @@ getFamePath <- function(dbString){
     if(path != dbString) return(path)
   }
   else path <- dbString
-  
-  if(file.access(path, 4) == 0)
+
+  ## Now see if the path exists or may be a server path
+  if(file.access(path, 4) == 0)  ## is readable
     return(path)
   else {
-    if(file.access(path, 0) != 0)
-      cat("Could not find", path, "\n")
-    else
+    if(file.access(path, 0) == 0){
       cat("File", path, "exists, but cannot be read\n")
-    return(NULL)
+      return(NULL)
+    }
+    else {
+      if(mightBeFameServer(path)){
+        cat("'", path, "' may be a Fame Server path.\n", sep = "")
+        return(path)
+      }
+      else {
+        cat("Could not find", path, "\n")
+        return(NULL)
+      }
+    }
   }
+}
+
+mightBeFameServer <- function(path){
+  grepl("\\w[[:blank:]]+\\w", path)
 }
 
 isFameScalar <- function(x){
@@ -193,7 +209,6 @@ isFameScalar <- function(x){
 isScalarOrTis <- function(x){
   is.tis(x) || isFameScalar(x)
 }
-
 
 getfame <- function(sernames, db, save = FALSE, envir = parent.frame(),
                     start = NULL, end = NULL, getDoc = TRUE){
@@ -218,8 +233,7 @@ getfame <- function(sernames, db, save = FALSE, envir = parent.frame(),
   names(retList) <- rnames
   
   ## get series attributes
-  for(i in 1:n)
-    attList[[i]] <- fameWhat(dbKey, sernames[i], getDoc)
+  for(i in 1:n) attList[[i]] <- fameWhat(dbKey, sernames[i], getDoc)
 
   status <- lapply(attList, "[[", "status")
   class  <- lapply(attList, "[[", "class")
@@ -710,7 +724,6 @@ fameRange <- function(freq, startYear = -1, startPeriod = -1,
   z
 }
 
-
 fameWhat <- function(dbKey, fname, getDoc = FALSE){
   getDoc <- as.integer(as.logical(getDoc))
   ## read low-level information about an object in a Fame database
@@ -736,6 +749,14 @@ fameWhat <- function(dbKey, fname, getDoc = FALSE){
   if(getDoc){
     z$des <- stripBlanks(z$des)
     z$doc <- stripBlanks(z$doc)
+    deslen <- nchar(z$des)
+    doclen <- nchar(z$doc)
+    if(deslen > 250 || doclen > 250 && !is.null(path <- attr(dbKey, "path"))){
+      if(deslen > 250)
+        z$des <- as.vector(unlist(getFameAttribute("description", fname,   path = path)))
+      if(doclen > 250)
+        z$doc <- as.vector(unlist(getFameAttribute("documentation", fname, path = path)))
+    }
   }
   else z$des <- z$doc <- character(0)
   z
@@ -869,8 +890,8 @@ fameWildlist <- function(db, wildString = "?", nMax = 1000, charMode = TRUE){
   z
 }
 
-getFameAttribute <- function(attribute, fname, db){
-  path <- getFamePath(db)
+getFameAttribute <- function(attribute, fname, db = NULL, path = NULL){
+  if(is.null(path)) path <- getFamePath(db)
   if(is.null(path)) stop(paste("cannot read", db))
   if(!fameRunning()) fameStart()
   

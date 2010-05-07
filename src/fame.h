@@ -11,6 +11,7 @@
 #endif
 
 /* Status codes */
+#define HBKEY	 6	/* A bad data base key was given.		*/
 #define HNOOBJ	13	/* The given object does not exist.*/
 #define HBOBJT	16	/* A bad object type given or object has wrong type.*/
 #define HBFREQ	17	/* A bad frequency given or object has wrong frequency.*/

@@ -40,7 +40,8 @@ fameWildlist(db, wildString = "?", nMax = 1000, charMode = TRUE)
   \item{db}{
     string giving the relative or full path to the Fame database to read
     or write from. If the \code{fameLocalPath()} function is defined, it
-    will be called on this argument to obtain a path.
+    will be called on this argument to obtain a path.  To open a remote
+    database, use a string like "servername /path/to/a/database.db".
   }
   \item{save}{
     if \code{TRUE} the retrieved series are individually saved in the
