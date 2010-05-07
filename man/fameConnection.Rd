@@ -7,7 +7,7 @@
 \description{Creates a connection to a Fame service running on a remote host.
 }
 \usage{
-fameConnection(service = " ", host = " ", user = " ", password = " ", stopOnFail = TRUE)
+fameConnection(service = "", host = "", user = "", password = "", stopOnFail = TRUE)
 \method{print}{fameConnection}(x, \dots)
 \method{close}{fameConnection}(con, \dots)
 

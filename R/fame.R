@@ -120,8 +120,8 @@ fameModeInt <- function(string){
     return(as.integer(modeNumber))
 }
 
-fameConnection <- function(service = " ", host = " ", user = " ",
-                           password = " ", stopOnFail = TRUE){
+fameConnection <- function(service = "", host = "", user = "",
+                           password = "", stopOnFail = TRUE){
   ## make sure a Fame server session is running
   if(!fameRunning()) fameStart()
   
@@ -187,6 +187,8 @@ fameDbOpen <- function(dbName, accessMode = "read", connection = NULL,
     }
   }
   attr(key, "path") <- as.character(dbName)
+  if(!is.null(connection))
+    attr(key, "connection") <- connection
   return(key)
 }
 
@@ -212,8 +214,11 @@ fameConnKeyForDb <- function(dbKey){
 }
 
 fameDbClose <- function(dbKey, closeConnection = TRUE){
-  if(closeConnection) conn <- fameConnKeyForDb(dbKey)
-  else                conn <- NULL
+  conn <- attr(dbKey, "connection")
+  if(!is.null(conn) && closeConnection == TRUE)
+    conn <- fameConnKeyForDb(dbKey)
+  else
+    conn <- NULL
   status <- .C("fameCloseDatabase", status = integer(1),
                dbKey = as.integer(dbKey), PACKAGE = "fame")$status
   if(status != 0 && status != 2)
