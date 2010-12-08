@@ -213,7 +213,7 @@ fameConnKeyForDb <- function(dbKey){
   }
 }
 
-fameDbClose <- function(dbKey, closeConnection = TRUE){
+fameDbClose <- function(dbKey, closeConnection = FALSE){
   conn <- attr(dbKey, "connection")
   if(!is.null(conn) && closeConnection == TRUE)
     conn <- fameConnKeyForDb(dbKey)

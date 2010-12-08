@@ -97,7 +97,7 @@ fameState()
 fameCommand(string, silent = TRUE, capture = FALSE)
 fameStatusMessage(code)
 fameDbOpen(dbName, accessMode = "read", connection = NULL, stopOnFail = TRUE)
-fameDbClose(dbKey, closeConnection = TRUE)
+fameDbClose(dbKey, closeConnection = FALSE)
 fameDeleteObject(db, fname)
 fameWriteSeries(dbKey, fname, ser, update = FALSE, checkBasisAndObserved = FALSE)
 fameWhat(dbKey, fname, getDoc = FALSE)
@@ -119,8 +119,10 @@ fameWhat(dbKey, fname, getDoc = FALSE)
   \item{stopOnFail}{should the function \code{stop()} if the database
 	cannot be opened? Also, see the return value below.}
   \item{dbKey}{integer returned by \code{dbOpen}}
-  \item{closeConnection}{if \code{TRUE} (the default) close the
-  fameConnection associated with the database as well. This only applies
+  \item{closeConnection}{if \code{TRUE}, close the
+  fameConnection associated with the database as well. The default is to
+  leave the connection open.  This implies that whoever opened the
+  connection in the first place should explicitly close it. This only applies
   to databases that were opened on a connection, not to local databases.}
   \item{db}{can take \code{dbKey} or \code{dbName} form; that is, it can
 	be an integer returned by \code{dbOpen}, or it can be the name of a
