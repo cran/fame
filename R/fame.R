@@ -849,7 +849,7 @@ fameWhat <- function(dbKey, fname, getDoc = FALSE){
     z$doc <- stripBlanks(z$doc)
     deslen <- nchar(z$des)
     doclen <- nchar(z$doc)
-    if(deslen > 250 || doclen > 250 && !is.null(db <- attr(dbKey, "path"))){
+    if((deslen > 250 || doclen > 250) && !is.null(db <- attr(dbKey, "path"))){
       if(deslen > 250)
         z$des <- as.vector(unlist(fameAttribute("description",   fname, db)))
       if(doclen > 250)
