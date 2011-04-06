@@ -1,3 +1,12 @@
+Changes in Version 2.15
+
+  o changed "env = envir" to "envir = envir" in several places to avoid
+    package check complaints about partial matches
+
+Changes in Version 2.14
+
+  o putfame() now tells you if it creates a database
+
 Changes in Version 2.13
 
   o bugfix in fameWhat()

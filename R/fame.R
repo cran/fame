@@ -521,7 +521,7 @@ getfame <- function(sernames, db, connection = NULL, save = FALSE,
   zz <- retList[retLengths > 0]
   if(save){
     for(name in names(zz)){
-      assign(name, zz[[name]], env = envir)
+      assign(name, zz[[name]], envir = envir)
     }
     invisible(zz)
   }
@@ -542,8 +542,10 @@ putfame <- function(serlist, db,
   if(missing(access)){
     if(file.exists(dbPath))
       access <- "shared"
-    else
+    else{
       access <- "create"
+      cat(paste("NOTE: Database", dbPath, "not found, will be created.\n"))
+    }
   }
   ## make sure a Fame server session is running
   if(!fameRunning()) fameStart()
