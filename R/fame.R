@@ -370,8 +370,16 @@ getfame <- function(sernames, db, connection = NULL, save = FALSE,
           if(isTi)
             retItem <- ti(retItem, tif = fameToTif(atts$type))
         }
-        if(atts$type %in% fameTypes[c("boolean", "numeric", "precision")])
-          retItem <- eval(parse(text = retItem))
+        if(atts$type %in% fameTypes[c("boolean", "numeric", "precision")]){
+          if(retItem == "NC"){
+            if(atts$type == fameTypes["boolean"]) retItem <- NA
+            else                                  retItem <- NaN
+          }
+          else{
+            if(retItem %in% c("ND", "NA")) retItem <- NA
+            else                           retItem <- eval(parse(text = retItem))
+          }
+        }
 
         if(getDoc){
           description(retItem)   <- atts$des

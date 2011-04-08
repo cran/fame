@@ -1,3 +1,8 @@
+Changes in Version 2.16
+
+  o make getfame() correctly read scalar NC and ND values. Thanks to Corwin
+    Joy for reporting the bug.
+
 Changes in Version 2.15
 
   o changed "env = envir" to "envir = envir" in several places to avoid
