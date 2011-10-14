@@ -1296,7 +1296,12 @@ if test `eval echo '${'$as_ac_File'}'` = yes; then
 fi
 
 
-    libnn=`R CMD config LIBnn`
+    : ${R_HOME=`R RHOME`}
+  if test -z "${R_HOME}"; then
+    echo "could not determine R_HOME"
+    exit 1
+  fi
+  libnn=`"${R_HOME}/bin/R" CMD config LIBnn`
 
     if test "$libnn" = "lib64" ; then
     libDir="$fameDir/hli/64"

@@ -20,7 +20,12 @@ if test $fameDir; then
   AC_CHECK_FILE("$fameDir/hli/hli.h",  includeDir="$fameDir/hli")
 
   dnl find out if this is 64-bit version of R
-  libnn=`R CMD config LIBnn`
+  : ${R_HOME=`R RHOME`}
+  if test -z "${R_HOME}"; then
+    echo "could not determine R_HOME"
+    exit 1
+  fi
+  libnn=`"${R_HOME}/bin/R" CMD config LIBnn`
 
   dnl set libDir to directory containing chli.dll, libchli.so, or libchli.a
   if test "$libnn" = "lib64" ; then

@@ -25,18 +25,31 @@ fameAttribute <- function(attribute, fname, db){
 }
 
 fameSetAttribute <- function(attribute, value, fname, db){
+  closeBlah <- function(){
+    ## an internal function to make sure the BLAH channel gets closed
+    ## close channel BLAH if it was left open
+    zz <- fameCommand("type @open.db", capture = TRUE)
+    if(tolower(as.vector(zz)) == "blah") fameCommand("close blah")
+  }
+
   path <- getFamePath(db)
   if(!fameRunning()) fameStart()
   
   openCommand <- paste('open <access shared> "', path, '" as blah', sep = "")
+  closeBlah()
   if(fameCommand(openCommand) != 0) stop("couldn't open db")
-  on.exit(fameCommand("close blah"))
+  on.exit(closeBlah())
 
-  if(!is.numeric(value)) value <- dQuote(value)
+  if(is.numeric(value)){
+    oldOpt <- options(scipen = 15)
+    on.exit(options(oldOpt))
+  } else {
+    value <- dQuote(value)
+  }
   attrCommand <- paste("attribute ", attribute, "(", fname, ") = ", value, sep = "")
   
-  
   strings <- fameCommand(attrCommand, silent = TRUE, capture = TRUE)
+  closeBlah()
   status <- attr(strings, "status")
   if(status != 0) stop(paste("bad status", status, "returned by", attrCommand))
   retval <- tolower(strings[strings != ""])

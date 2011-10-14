@@ -503,6 +503,8 @@ getfame <- function(sernames, db, connection = NULL, save = FALSE,
                 retItem <- fameDateToTi(z$data, fameFreq)
               else
                 retItem <- z$data
+
+              names(retItem) <- range[2]:range[3]
             }
             else {
               retItem <- tis(z$data, start = actualStart)
@@ -765,11 +767,17 @@ fameWriteSeries <- function(dbKey, fname, ser, update = FALSE,
 }
 
 fameDateToTi <- function(fameDates, freq = tifToFame("daily")){
-  if(!(is.numeric(freq) && freq < 999))
-    freq <- tifToFame(freq)
-  firstYmd <- fameYmd(fameDates[1], freq)
-  firstTi <- ti(firstYmd, tif = fameToTif(freq))
-  firstTi + (fameDates - fameDates[1])
+  retVec <- as.integer(fameDates) + NA
+  okSpots <- !is.na(fameDates)
+  if(any(okSpots)){
+    fameDates <- fameDates[okSpots]
+    if(!(is.numeric(freq) && freq < 999))
+      freq <- tifToFame(freq)
+    firstYmd <- fameYmd(fameDates[1], freq)
+    firstTi <- ti(firstYmd, tif = fameToTif(freq))
+    retVec[okSpots] <- firstTi + (fameDates - fameDates[1])
+  }
+  asTi(retVec)
 }
 
 fameYmd <- function(fameDate, fameFreq = tifToFame("daily")){

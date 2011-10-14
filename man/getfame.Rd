@@ -155,7 +155,8 @@ fameWildlist(db, wildString = "?", connection = NULL, nMax = 1000, charMode = TR
   is \code{T}, the list is returned invisibly.  The names of the list
   are the R names described in the details.  Fame scalars are returned
   as strings, \code{ti} dates, or numbers.  Case series are returned as
-  vectors of the appropriate type, without any case numbers.  If \code{getDoc}
+  vectors of the appropriate type, with the names attribute of each
+  vector set to the case numbers.  If \code{getDoc}
   is \code{TRUE} (the default), retrieved objects will also have
   attributes named \code{description} and \code{documentation}.
 

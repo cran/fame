@@ -1,3 +1,11 @@
+Changes in Version 2.17
+
+  o CASE series returned by getfame() now have a names attribute set to the
+    case numbers, a suggestion by Corwin Joy.
+
+  o make getfame() handle a date series that starts with an NA value. Thanks to Corwin
+    Joy for reporting the bug and suggesting a way to fix it.
+
 Changes in Version 2.16
 
   o make getfame() correctly read scalar NC and ND values. Thanks to Corwin
