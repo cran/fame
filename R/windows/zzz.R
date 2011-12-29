@@ -6,18 +6,16 @@
   fameDir <- Sys.getenv("FAME")
   if(nchar(fameDir) == 0){
     defaultDir <- "C:/Program Files/FAME"
-    cat(paste("FAME environment variable not set; assuming", defaultDir))
+    packageStartupMessage("FAME environment variable not set; assuming ", defaultDir)
     fameDir <- defaultDir
     fameDir <- sub("/$", "", chartr("\\", "/", fameDir))
   }
   
   if(!file.exists(fameDir)){
-    noFameMessage <-
-      paste("FAME directory", fameDir, "not found.\n",
-            "If you have FAME installed, specify it's location",
+      packageStartupMessage("FAME directory ", fameDir, " not found.\n",
+            "If you have FAME installed, specify it's location ",
             "via the FAME environment variable.\n",
             "Otherwise, this package is pretty useless.\n")
-    cat(noFameMessage)
   }
   else {  ## apparently FAME is installed
 

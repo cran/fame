@@ -161,6 +161,22 @@ fameWildlist(db, wildString = "?", connection = NULL, nMax = 1000, charMode = TR
   attributes named \code{description} and \code{documentation}.
 
   \code{putfame} invisibly returns an empty string.
+  
+ 
+  \code{fameWhats} returns \code{NULL} if it can't find \code{fname} in
+  \code{db}. Otherwise, it return a list with components
+  \item{name}{name of the object in the database}
+  \item{class}{'series', 'scalar', or 'formula'}
+  \item{type}{'undefined', 'numeric', 'namelist', 'boolean',
+	'string', 'precision', or 'date'}
+  If the object is a date, there will also be a component
+  \item{tif}{tifName for the date's frequency}
+  If the object is a series, there will also be components
+  \item{basis}{'undefined', 'daily' or 'business'}
+  \item{observed}{'undefined', 'beginning', 'ending', 'averaged',
+	'summed', 'annualized', 'formula', 'high', or 'low'}
+  \item{length}{number of observations in the series}
+  \item{start}{a ti (TimeIndex) start date for the series}
 }
 \note{
   These functions use the Fame HLI and a child server

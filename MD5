@@ -1,13 +1,13 @@
 f49c1a61d86a02efe939c1c44b6e9013 *COPYRIGHTS
-4fc5520a4ca94b641833f643f44071ff *DESCRIPTION
+634243464294d5b1bc76c9a9dd59ae62 *DESCRIPTION
 55374bb51db40b5f50fb3bccc769bcfa *NAMESPACE
-75419f914e37432fd56f9e04739789f4 *NEWS
+a14de09b83158e869a1ec3f5ae921c67 *NEWS
 f5c6d332a731d57fe10cf6bc8c7b99d0 *R/fame.R
 66c7f9dffc1fda71fcfd688b6f9404ac *R/fameAttributes.R
 69ebe4f40c90beecc7a7a7916e7b2213 *R/fameSupport.R
 bf5bc4845ec2662e378dbe41df4b9526 *R/osUtilities.R
 658ee7ef7b4fd059efbb741047bd9061 *R/unix/zzz.R
-81de1d3d43aedb32e93958d3934f353b *R/windows/zzz.R
+65b7e21eff4c4b11066f26268fa547ab *R/windows/zzz.R
 443ba1b1851d717bfe96bd73f705a194 *cleanup
 2e7d104aac020396afcf3dda0dbe6a91 *configure
 d264cec4f89e77b0da9f799db9ad1087 *configure.ac
@@ -19,7 +19,7 @@ a497b9cf216e147f56a5ce7e4f4fee29 *man/fameAddAttribute.Rd
 9845713ea1041e718ab852b2f69778f2 *man/fameConnection.Rd
 62096c5bca224303c9761439804c4271 *man/fameIsScalar.Rd
 0aef8610cd034fb9090f4d010becc517 *man/getFamePath.Rd
-0c685404a91702aae59e3e418a56b70f *man/getfame.Rd
+f6e5993ac8d2dc2d34347ce8e3c6fc80 *man/getfame.Rd
 2fd07b14cdde53ae21fb007efdb46bbc *man/lowLevelFame.Rd
 29b7c046e9cfe2e6dd96a750c944c642 *man/osUtilities.Rd
 ed07439b4b2926a110f518a385121762 *man/tifToFameName.Rd

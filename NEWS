@@ -1,3 +1,8 @@
+Changes in Version 2.18
+
+  o updated documentation for fameWhats() with better description of its
+    return value as suggested by Paul Gilbert.
+
 Changes in Version 2.17
 
   o CASE series returned by getfame() now have a names attribute set to the
