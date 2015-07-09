@@ -93,6 +93,14 @@ void yearMonthDayFromFameDate(int *status, int *freq, int *date,
   cfmdatd(status, *freq, *date, year, month, day);
 }
 
+void ymdhmsFromFameDate(int *status, int *freq, int *date,
+                        int *year, int *month, int *day,
+                        int *hour, int *minute, int *second){
+  int ddate, boink;
+  cfmdatt(status, *freq, *date, hour, minute, second, &ddate);
+  cfmdatd(&boink, HDAILY, ddate, year, month, day);
+}
+
 void fameWhat(int *status, int *dbkey, char **objnam, int *class,
 			 int *type, int *freq, int *basis, int *observ,
 			 int *fyear, int *fprd, int *lyear, int *lprd, 

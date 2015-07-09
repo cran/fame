@@ -13,9 +13,9 @@ tifToFameName(tif)
   the input.}
 \seealso{ \code{\link[tis:tif]{tif}}, \code{\link[tis:tif]{tifName}}}
 \examples{
-tifToFameName(tif(today()))
-tifToFameName(tif(latestMonth()))
-tifToFameName(tifName(today()))
-tifToFameName(tifName(latestMonth()))
+tifToFameName(tis::tif(tis::today()))
+tifToFameName(tis::tif(tis::latestMonth()))
+tifToFameName(tis::tifName(tis::today()))
+tifToFameName(tis::tifName(tis::latestMonth()))
 }
 \keyword{ chron }

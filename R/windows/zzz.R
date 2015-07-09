@@ -28,7 +28,7 @@
       assign(".chliPath", chliPath, pos = baseenv())
     else stop("Could not load chli.dll")
     
-    library.dynam("fame", package = "fame")
+    library.dynam("fame", package = "fame", lib.loc = NULL)
     if(!is.loaded("dummyFameFunction"))
       stop("Could not load fame.dll")
   }

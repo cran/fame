@@ -25,10 +25,10 @@ if test $fameDir; then
     echo "could not determine R_HOME"
     exit 1
   fi
-  libnn=`"${R_HOME}/bin/R" CMD config LIBnn`
+  is64=`file "${R_HOME}/bin/exec/R" | grep -c 64`
 
   dnl set libDir to directory containing chli.dll, libchli.so, or libchli.a
-  if test "$libnn" = "lib64" ; then
+  if test "$is64" -ne "0" ; then
     libDir="$fameDir/hli/64"
   else
     libDir="$fameDir/hli"

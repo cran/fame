@@ -285,7 +285,7 @@ mightBeFameServer <- function(path){
 }
 
 fameIsScalar <- function(x){
-  !(is.tis(x) || is.ts(x)) && is.atomic(x) && length(x) == 1
+  !(is.tis(x) || is.ts(x)) && ((is.atomic(x) && length(x) == 1)|| is.character(x))
 }
 
 isScalarOrTis <- function(x){
@@ -355,7 +355,12 @@ getfame <- function(sernames, db, connection = NULL, save = FALSE,
     atts <- attList[[i]]
     sername <- sernames[i]
 
-    if(atts$status == 0){
+    if(atts$status != 0){
+      msg <- paste("ERROR -- Object:", sername, "database:", dbPath, "--",
+                   fameStatusMessage(atts$status))
+      warning(msg, immediate. = TRUE)
+    }
+    else {
       if(atts$class == fameClasses["scalar"]){
         retItem <- fameCommand(paste("type", sername), capture = TRUE)
         if(attr(retItem, "status") != 0){
@@ -394,8 +399,8 @@ getfame <- function(sernames, db, connection = NULL, save = FALSE,
           fAtts <- atts
           atts <- fameWhat(0, sernames[i], getDoc)
           if(getDoc){
-            if(fAtts$des != "") atts$des <- fAtts$des
-            if(fAtts$doc != "") atts$doc <- fAtts$doc
+            if(any(fAtts$des != "")) atts$des <- fAtts$des
+            if(any(fAtts$doc != "")) atts$doc <- fAtts$doc
           }
         }
 
@@ -529,6 +534,7 @@ getfame <- function(sernames, db, connection = NULL, save = FALSE,
   }
   retLengths <- lapply(retList, length)
   zz <- retList[retLengths > 0]
+
   if(save){
     for(name in names(zz)){
       assign(name, zz[[name]], envir = envir)
@@ -649,22 +655,29 @@ putfame <- function(serlist, db,
   }
 }
 
-fameWriteScalar <- function(dbPath, fname, scalar, update = TRUE){
+fameWriteScalar <- function(dbName, fname, scalar, update = TRUE,
+                            type = c("date", "precision", "boolean", "string", "namelist")){
   ## if update is FALSE or there is no existing object named 'fname', put
   ## overwrite on to force creation of a new object along with any documentation
   ## and description attributes.
   ## Note that the database being written to is 'targetdb'.  This should be
-  ## the same database as specified by 'dbPath', but 'dbPath' is used only
+  ## the same database as specified by 'dbName', but 'dbName' is used only
   ## when searching, as the CHLI only allows searches on databases via the
   ## dbkey, and it provides no way of getting the dbkey for a database opened
   ## via the cfmfame() function employed by fameCommand()
-  if(is.ti(scalar))              type <- "date"
-  else if(is.numeric(scalar))    type <- "precision"
-  else if(is.logical(scalar))    type <- "boolean"
-  else if(is.character(scalar))  type <- "string"
-  else stop("scalar must be ti, numeric, logical or character type")
+  if(missing(type)){
+    if(is.ti(scalar))              type <- "date"
+    else if(is.numeric(scalar))    type <- "precision"
+    else if(is.logical(scalar))    type <- "boolean"
+    else if(is.character(scalar)){
+      if(length(scalar) <= 1) type <- "string"
+      else type <- "namelist"
+    }
+    else stop("scalar must be ti, numeric, logical or character type")
+  }
+  else type <- match.arg(type)
   
-  wl <- fameWildlist(db = dbPath, wildString = fname, nMax = 2)
+  wl <- fameWildlist(db = dbName, wildString = fname, nMax = 2)
   nFound <- length(wl[[1]])
   if(nFound > 1) stop("found multiple objects with same name")
   
@@ -680,20 +693,29 @@ fameWriteScalar <- function(dbPath, fname, scalar, update = TRUE){
     cmd <- paste("scalar !targetdb'", fname, ":", type, " =", sep = "") 
   }
 
-  switch(type,
-         date = {
-           fameCommand(paste("frequency", tifToFameName(scalar)))
-           fameCommand(paste(cmd, fameDateString(scalar)))
-         },
-         precision = {
-           fameCommand(paste(cmd, format(scalar, digits =14)))
-         },
-         boolean = {
-           fameCommand(paste(cmd, scalar))
-         },
-         string = {
-           fameCommand(paste(cmd, " \"", scalar, "\"", sep = ""))
-         })
+  if(length(scalar) == 0){
+    if(!update) fameCommand(gsub(" =", "", cmd))
+  }
+  else {
+    switch(type,
+           date = {
+             fameCommand(paste("frequency", tifToFameName(scalar)))
+             fameCommand(paste(cmd, fameDateString(scalar)))
+           },
+           precision = {
+             fameCommand(paste(cmd, format(scalar, digits =14)))
+           },
+           boolean = {
+             fameCommand(paste(cmd, scalar))
+           },
+           string = {
+             fameCommand(paste(cmd, dQuote(scalar)))
+           },
+           namelist = {
+             string <- paste("{", paste(scalar, collapse = ", "), "}", sep = "")
+             fameCommand(paste(cmd, " ", string, sep = ""))
+           })
+  }
   if(nFound == 0 || update == FALSE){
     if(!is.null(desc <- description(scalar)))
       fameCommand(paste("description(", fname, ") = \"", desc, "\"", sep = ""))
@@ -773,11 +795,33 @@ fameDateToTi <- function(fameDates, freq = tifToFame("daily")){
     fameDates <- fameDates[okSpots]
     if(!(is.numeric(freq) && freq < 999))
       freq <- tifToFame(freq)
-    firstYmd <- fameYmd(fameDates[1], freq)
-    firstTi <- ti(firstYmd, tif = fameToTif(freq))
+    firstJul <- fameJul(fameDates[1], freq)
+    firstTi <- ti(firstJul, tif = fameToTif(freq))
     retVec[okSpots] <- firstTi + (fameDates - fameDates[1])
   }
   asTi(retVec)
+}
+
+fameJul <- function(fameDate, fameFreq = tifToFame("daily")){
+  ## make sure a Fame server session is running
+  if(!fameRunning()) fameStart()
+  z <- .C("ymdhmsFromFameDate",
+          status   = integer(1),
+          freq     = as.integer(fameFreq),
+          fameDate = as.integer(fameDate),
+          year     = integer(1),
+          month    = integer(1),
+          day      = integer(1),
+          hour     = integer(1),
+          minute   = integer(1),
+          second   = integer(1),
+          PACKAGE  = "fame")
+  if(z$status != 0){
+    cat(fameStatusMessage(z$status))
+    stop()
+  }
+  jul(10000*z$year + 100*z$month + z$day) +
+    (3600*z$hour + 60*z$minute + z$second)/86400
 }
 
 fameYmd <- function(fameDate, fameFreq = tifToFame("daily")){
@@ -1002,7 +1046,8 @@ fameWildlist <- function(db, wildString = "?", connection = NULL, nMax = 1000, c
     z$type[isDateType] <- "date"
     z$freq[isDateType] <- types[isDateType]
     isCaseSeries <- z$freq == 232
-    z$freq  <- tifName(fameToTif(z$freq))
+    isNamelist <- z$type == "namelist"
+    z$freq[!isNamelist]  <- tifName(fameToTif(z$freq[!isNamelist]))
     z$freq[isCaseSeries] <- "case"
   }
   z

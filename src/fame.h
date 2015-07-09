@@ -32,6 +32,7 @@
 #define HNTMIS    0	/* Do not translate missing values	*/
 #define HTMIS     1	/* Translate missing values		*/
 #define HNMVAL    0	/* Normal value; not missing or magic	*/
+#define HDAILY    8	/* Daily freq code	*/
 
 extern DLLENTRY float FNUMNA ;		/* NUMERIC NA	*/
 extern DLLENTRY float FNUMNC ;		/* NUMERIC NC	*/
@@ -49,6 +50,7 @@ DLLENTRY void cfmclcn  A((int *, int));
 DLLENTRY void cfmcldb  A((int *, int));
 DLLENTRY void cfmgcid  A((int *, int, int *));
 DLLENTRY void cfmdatd  A((int *, int, int, int *, int *, int *));
+DLLENTRY void cfmdatt  A((int *, int, int, int *, int *, int *, int *));
 DLLENTRY void cfmddat  A((int *, int, int *, int, int, int));
 DLLENTRY void cfmdlob  A((int *, int, char *));
 DLLENTRY void cfmfame  A((int *, char *));

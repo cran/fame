@@ -1,3 +1,21 @@
+Changes in Version 2.21
+
+  o getfame() failed to read doc attribute of a series if the documentation had
+    more than one string in it.
+    
+
+Changes in Version 2.20
+
+  o package:fame now Imports functions from package tis and no longer Depends on it. 
+    package:tis contains some functions with common names, like 'year' and 'month'.
+    By not attaching it along with package:fame, the tis package is less likely to interfere
+    with other packages that have functions with the same names in them. However, this also
+    means that if you really want the tis functions, you'll have to library(tis).
+
+Changes in Version 2.19
+
+  o better error messages and warnings for getfame()
+
 Changes in Version 2.18
 
   o updated documentation for fameWhats() with better description of its

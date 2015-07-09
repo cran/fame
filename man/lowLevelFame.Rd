@@ -9,6 +9,7 @@
 \alias{fameDbOpen}
 \alias{fameDbClose}
 \alias{fameDeleteObject}
+\alias{fameWriteScalar}
 \alias{fameWriteSeries}
 \alias{fameWhat}
 \title{Low Level Fame Interface Functions}
@@ -81,6 +82,19 @@
   \code{ser}.  This function should probably not be called directly, as
   \code{putfame} provides a nicer interface.
 
+  \code{fameWriteScalar} writes the \code{tis} (Time Indexed Series)
+  object \code{ser} as \code{fname} in the database associated with
+  \code{dbKey}. If an object by that name already exists in the database
+  and \code{update} is \code{TRUE}, the frequency and type of \code{ser}
+  are checked for consistency with the existing object, and if
+  \code{checkBasisAndObserved} is \code{TRUE} (not the default), those
+  items are also checked.  Any inconsistencies cause the update to fail.
+  If all checks are OK, then the range covered by \code{ser} is written
+  to the database.  If \code{update} if \code{FALSE}, any existing
+  series called \code{fname} in the database will be replaced by
+  \code{ser}.  This function should probably not be called directly, as
+  \code{putfame} provides a nicer interface.
+
   \code{fameWhat} returns a list of low level information about an
   object in a database, including components named status, dbKey, name,
   class, type, freq, basis, observ, fyear, fprd, lyear, lprd, obs, and
@@ -99,6 +113,8 @@ fameStatusMessage(code)
 fameDbOpen(dbName, accessMode = "read", connection = NULL, stopOnFail = TRUE)
 fameDbClose(dbKey, closeConnection = FALSE)
 fameDeleteObject(db, fname)
+fameWriteScalar(dbName, fname, scalar, update = TRUE,
+                type = c("date", "precision", "boolean", "string", "namelist"))
 fameWriteSeries(dbKey, fname, ser, update = FALSE, checkBasisAndObserved = FALSE)
 fameWhat(dbKey, fname, getDoc = FALSE)
 }
@@ -120,17 +136,24 @@ fameWhat(dbKey, fname, getDoc = FALSE)
 	cannot be opened? Also, see the return value below.}
   \item{dbKey}{integer returned by \code{dbOpen}}
   \item{closeConnection}{if \code{TRUE}, close the
-  fameConnection associated with the database as well. The default is to
-  leave the connection open.  This implies that whoever opened the
-  connection in the first place should explicitly close it. This only applies
-  to databases that were opened on a connection, not to local databases.}
+    fameConnection associated with the database as well. The default is to
+    leave the connection open.  This implies that whoever opened the
+    connection in the first place should explicitly close it. This only applies
+    to databases that were opened on a connection, not to local databases.}
+  \item{fname}{name of an object in a FAME database}
+  \item{scalar}{object to be written to the database}
+  \item{type}{kind of FAME scalar to create in the database. If this
+    argument is missing, it is inferred from characteristics of
+    \code{scalar}.  In fact, the only time you should ever really need to
+    use this argument is if \code{scalar} is a character object of length
+    one but you really want it to be written as a 'namelist' of length
+    one, rather than a 'string' scalar.}
+  \item{update}{if \code{TRUE} update any existing series by the same
+	name in place.  If \code{FALSE}, replace existing series.}
   \item{db}{can take \code{dbKey} or \code{dbName} form; that is, it can
 	be an integer returned by \code{dbOpen}, or it can be the name of a
 	database or path to a database.}
-  \item{fname}{name of an object in a FAME database}
   \item{ser}{a \code{tis} time series}
-  \item{update}{if \code{TRUE} update any existing series by the same
-	name in place.  If \code{FALSE}, replace existing series.}
   \item{checkBasisAndObserved}{ see description above for \code{fameWriteSeries}}
   \item{getDoc}{if \code{TRUE}, also return the \code{description} and
   \code{documentation} attributes.}
@@ -157,6 +180,8 @@ fameWhat(dbKey, fname, getDoc = FALSE)
   \code{fameDbClose} returns a status code.
 
   \code{fameDeleteObject}  returns a status code.
+
+  The return value from \code{fameWriteScalar} is useless and should be ignored.
 
   \code{fameWriteSeries}  returns a status code.
 

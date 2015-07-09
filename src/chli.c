@@ -33,6 +33,7 @@ void cfmwrng_f() { return;}
 void cfmgtsts()  { return;}
 void cfmlsts()   { return;}
 void cfmdatd()   { return;}
+void cfmdatt()   { return;}
 void cfmddat()   { return;}
 void cfmfin()    { return;}
 void cfmini()    { return;}

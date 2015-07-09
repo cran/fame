@@ -9,7 +9,9 @@
   can set it. 
 }
 \usage{
-fameAddAttribute(name, type = c("string", "date", "boolean", "precision", "numeric", "namelist"), db)
+fameAddAttribute(name, type = c("string", "date", "boolean",
+                 "precision", "numeric", "namelist"), 
+db)
 }
 \arguments{
   \item{name}{name of the attribute}
