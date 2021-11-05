@@ -1,4 +1,4 @@
-AC_INIT([fame], 2.3)
+AC_INIT([fame],[2.3])
 dnl initialize to blanks
 AC_SUBST([CPPFLAGS], [""])
 AC_SUBST([LIBS], [""])
@@ -11,8 +11,7 @@ if test $FAME ; then
 	fameDir="${FAME}"
 fi
 AC_ARG_WITH([fameDir],
-		    AC_HELP_STRING([--with-fameDir=DIR],
-                           [specify the FAME directory, which may have an hli subdirectory]),
+		    AS_HELP_STRING([--with-fameDir=DIR],[specify the FAME directory, which may have an hli subdirectory]),
 		    [fameDir=$withval])
 
 if test $fameDir; then
